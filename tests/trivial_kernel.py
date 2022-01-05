@@ -65,7 +65,4 @@ print("Initial params:", m.get_params())
 update = np.asarray(jnp.ones_like(x))
 print("Run:", m.run(update))
 print("Run:", m.run(update + 2.0))
-try:
-  print("Updated params:", m.get_params())
-except IndexError:
-  print("FAILED AS EXPECTED (https://github.com/google/iree/issues/7988)")
+print("Updated params:", m.get_params())

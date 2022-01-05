@@ -9,70 +9,8 @@ for the purpose of allowing programs to be extracted and compiled from JAX
 for deployment with IREE, without a Python or JAX dependency.
 
 In order to understand how this works, it is important to have a working
-knowledge of what JAX and IREE programs are.
-
-## What is a JAX program?
-
-The challenge with talking about extracting a JAX program is that in all
-generality, a JAX program is bounded only by what can run in the host Python
-interpreter. What we are looking for is a simpler definition that allows a
-useful set of standalone programs to be constructed and that meshes well with
-the programming model employed by typical JAX developers.
-
-The components that are the most interesting towards this end are:
-
-* `jax.jit` functions: stateless functions mapping inputs to outputs, natively
-  represented as JAXPR IR and universally convertible to MHLO IR.
-* Multi-dimensional arrays very similar to numpy arrays, with extensions to
-  enable tracing and distribution.
-* Trees of arrays and primitives (a structured generalization of nested dicts,
-  lists and tuples).
-* "AbstractValues" mirroring all concrete data types, facilitating symbolic
-  tracing and descriptions of program elements.
-
-There are of course many more details than this, but these are the components
-we will assemble.
-
-## What is an IREE program?
-
-An IREE program is:
-
-* Defined by an MLIR module containing:
-  * A name, which can be used for cross-referencing between modules. All modules
-    loaded into a single runtime instance must have a unique name.
-  * Zero or more globals. Globals can contain any scalar or multi-dimensional
-    array of any supported type (IREE has an open type system and supports
-    more than this but these types are relevant to JAX). Globals can be:
-      * Loaded, yielding their current value
-      * Stored, updating the value
-      * Mutable or immutable
-      * Initialized, either via a constant or via special initializer functions
-        that can do whatever they want at module load time
-  * One or more public functions, each of which accepts and returns scalars and
-    buffers representationing multi-dimensional arrays. IREE functions can
-    do a lot of things, but relevant to JAX, they can include:
-      * A graph of MHLO operations (the native IR of JAX jitted functions)
-      * Operations and types from
-        [IREE's input dialect](https://github.com/google/iree/blob/main/llvm-external-projects/iree-dialects/include/iree-dialects/Dialect/Input/InputOps.td)
-      * Operations from low level MLIR dialects (for programs coming from a high
-        level IR like MHLO, these are typically not used, but they provide
-        the generality needed for more advanced cases such as implementing
-        full language compilers):
-        * MLIR [arith](https://mlir.llvm.org/docs/Dialects/ArithmeticOps/) dialect
-        * MLIR [linalg](https://mlir.llvm.org/docs/Dialects/Linalg/) dialect
-        * MLIR [math](https://mlir.llvm.org/docs/Dialects/MathOps/) dialect
-        * MLIR [std](https://mlir.llvm.org/docs/Dialects/Standard/) dialect (being phased out)
-        * MLIR [tensor](https://mlir.llvm.org/docs/Dialects/TensorOps/) dialect
-* Compiled by the `ireec` compiler, targeting a number or architectures and
-  devices
-* Compiled into an "IREE VM Program" which can be:
-  * Serialized to a `vmfb` (VM Flatbuffer) for direct execution by the IREE
-    runtime.
-  * Serialized to a C program for use in contexts where a runtime implementation
-    is not desirable.
-* Intended to run on a "single node" (single SOC, single set of devices on the
-  same bus, etc). Horizontal distribution is intended to be a layer atop IREE
-  if desired.
+knowledge of what JAX and IREE programs are (which we discuss after the
+example).
 
 ## By example
 
@@ -186,6 +124,69 @@ print("Updated params:", m.get_params())
 Module.get_compiled_artifact(m).save("/tmp/some_file.vmfb")
 ```
 
+## What is a JAX program?
+
+The challenge with talking about extracting a JAX program is that in all
+generality, a JAX program is bounded only by what can run in the host Python
+interpreter. What we are looking for is a simpler definition that allows a
+useful set of standalone programs to be constructed and that meshes well with
+the programming model employed by typical JAX developers.
+
+The components that are the most interesting towards this end are:
+
+* `jax.jit` functions: stateless functions mapping inputs to outputs, natively
+  represented as JAXPR IR and universally convertible to MHLO IR.
+* Multi-dimensional arrays very similar to numpy arrays, with extensions to
+  enable tracing and distribution.
+* Trees of arrays and primitives (a structured generalization of nested dicts,
+  lists and tuples).
+* "AbstractValues" mirroring all concrete data types, facilitating symbolic
+  tracing and descriptions of program elements.
+
+There are of course many more details than this, but these are the components
+we will assemble.
+
+## What is an IREE program?
+
+An IREE program is:
+
+* Defined by an MLIR module containing:
+  * A name, which can be used for cross-referencing between modules. All modules
+    loaded into a single runtime instance must have a unique name.
+  * Zero or more globals. Globals can contain any scalar or multi-dimensional
+    array of any supported type (IREE has an open type system and supports
+    more than this but these types are relevant to JAX). Globals can be:
+      * Loaded, yielding their current value
+      * Stored, updating the value
+      * Mutable or immutable
+      * Initialized, either via a constant or via special initializer functions
+        that can do whatever they want at module load time
+  * One or more public functions, each of which accepts and returns scalars and
+    buffers representationing multi-dimensional arrays. IREE functions can
+    do a lot of things, but relevant to JAX, they can include:
+      * A graph of MHLO operations (the native IR of JAX jitted functions)
+      * Operations and types from
+        [IREE's input dialect](https://github.com/google/iree/blob/main/llvm-external-projects/iree-dialects/include/iree-dialects/Dialect/Input/InputOps.td)
+      * Operations from low level MLIR dialects (for programs coming from a high
+        level IR like MHLO, these are typically not used, but they provide
+        the generality needed for more advanced cases such as implementing
+        full language compilers):
+        * MLIR [arith](https://mlir.llvm.org/docs/Dialects/ArithmeticOps/) dialect
+        * MLIR [linalg](https://mlir.llvm.org/docs/Dialects/Linalg/) dialect
+        * MLIR [math](https://mlir.llvm.org/docs/Dialects/MathOps/) dialect
+        * MLIR [std](https://mlir.llvm.org/docs/Dialects/Standard/) dialect (being phased out)
+        * MLIR [tensor](https://mlir.llvm.org/docs/Dialects/TensorOps/) dialect
+* Compiled by the `ireec` compiler, targeting a number or architectures and
+  devices
+* Compiled into an "IREE VM Program" which can be:
+  * Serialized to a `vmfb` (VM Flatbuffer) for direct execution by the IREE
+    runtime.
+  * Serialized to a C program for use in contexts where a runtime implementation
+    is not desirable.
+* Intended to run on a "single node" (single SOC, single set of devices on the
+  same bus, etc). Horizontal distribution is intended to be a layer atop IREE
+  if desired.
+
 ## Module Procedures
 
 As mentioned above, "Module Procedures" are the public functions that can be
@@ -208,3 +209,54 @@ reality, there are many ways to hack the current system to do more):
   * `Module.store_global`
   * `Module.print` (TODO)
 
+
+# Development
+
+These are WIP instructions for getting a functioning development setup. We
+aim to improve this and make it more turnkey over time.
+
+Pip installable releases are not yet available. However, this project is
+pure Python and can be installed locally for development (note that this
+pulls from IREE pre-release snapshots):
+
+```shell
+python -m pip install -e . -f https://github.com/google/iree/releases
+```
+
+Note that in order to function the version of MLIR and MHLO used in the
+installed jaxlib must be syntax compatible with the versions used in IREE.
+For releases, we synchronize these, but for development it can drift and
+cause errors.
+
+The easiest way to ensure this is to pin the JAX tensorflow version to the
+version that IREE was compiled with and follow the JAX instructions to build
+jaxlib locally. See:
+
+* [Building jaxlib from source](https://jax.readthedocs.io/en/latest/developer.html#building-jaxlib-from-source)
+* [Instructions for updating TensorFlow in JAX](https://github.com/google/jax/blob/main/WORKSPACE#L8)
+  (this is often optional as someone has likely committed an update).
+* [IREE's pinned commits](https://github.com/google/iree/blob/main/SUBMODULE_VERSIONS.txt)
+
+You may need to manually `pip uninstall` the automatically installed jaxlib.
+
+## Running Tests
+
+`lit tests/`
+
+## Using an IREE development tree
+
+Sometimes you will want to build with a local IREE. From IREE's build
+directory:
+
+```
+source .env && export PYTHONPATH
+```
+
+You must have built IREE with the `-DIREE_BUILD_LEGACY_JAX=OFF` to disable
+the original bundled JAX API.
+
+You may need to pip uninstall the automatically installed
+`iree-compiler-snapshot` and `iree-runtime-snapshot` packages.
+
+For IDE integration, you may just want to copy IREE's `.env` file to the
+root of this repo if working in this mode.

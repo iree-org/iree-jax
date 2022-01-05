@@ -36,6 +36,10 @@ setup(
         "iree.jax.*",
     ],),
     install_requires=[
-      "numpy",
+        "numpy",
+        "jax[cpu]",
+        "iree-compiler-snapshot",
+        "iree-runtime-snapshot",
+        "lit",
     ],
 )

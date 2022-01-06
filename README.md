@@ -220,7 +220,7 @@ pure Python and can be installed locally for development (note that this
 pulls from IREE pre-release snapshots):
 
 ```shell
-python -m pip install -e . -f https://github.com/google/iree/releases
+python -m pip install -e .[test,xla,cpu] -f https://github.com/google/iree/releases
 ```
 
 Note that in order to function the version of MLIR and MHLO used in the

@@ -9,3 +9,6 @@ from .module_api import Module
 like = Module.like
 kernel = Module.kernel
 store_global = Module.store_global
+
+# Export the legacy HLO proto based APIs.
+from .frontend import aot, jit

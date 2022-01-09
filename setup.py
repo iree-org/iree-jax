@@ -38,12 +38,12 @@ setup(
     install_requires=[
         "numpy",
         "jax",
-        "iree-compiler-snapshot",
-        "iree-runtime-snapshot",
+        "iree-compiler",
+        "iree-runtime",
     ],
     extras_require={
       "xla": [
-        "iree-tools-xla-snapshot",
+        "iree-tools-xla",
       ],
       "cpu": [
         "jax[cpu]",

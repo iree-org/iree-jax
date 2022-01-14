@@ -32,7 +32,7 @@ Params = namedtuple("Params", "a,b")
 params = Params(a, b)
 
 
-class TrivialGlobals(Module):
+class TrivialGlobals(Program):
 
   _params = params
 
@@ -55,4 +55,4 @@ instance = TrivialGlobals()
 # CHECK: func @set_params(%arg0: tensor<3x4xf32>, %arg1: tensor<3x4xf32>)
 # CHECK:   iree_input.global.store %arg0, @_params$0 : tensor<3x4xf32>
 # CHECK:   iree_input.global.store %arg1, @_params$1 : tensor<3x4xf32>
-print(Module.get_mlir_module(instance))
+print(Program.get_mlir_module(instance))

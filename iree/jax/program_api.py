@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""High level API for constructing input program modules.
+"""High level API for constructing input programs.
 
 This is intended to be the primary entry point for staging out a Jax program.
 It interfaces with the lower level exporter.
@@ -42,7 +42,7 @@ from .exporter import ExportModule
 logger = logging.getLogger("iree_jax")
 
 __all__ = [
-    "Module",
+    "Program",
 ]
 
 ################################################################################
@@ -61,7 +61,7 @@ def get_rt_config(driver_name: str):
 
 
 ################################################################################
-# Information data structures describing a Module under construction
+# Information data structures describing a Program under construction
 ################################################################################
 
 
@@ -165,8 +165,8 @@ class PyOnlyDef:
 ExportType = Union[ExportFunctionDef, ExportGlobalDef, PyOnlyDef]
 
 
-class ModuleClassInfo:
-  """Info class attached associated with a Module class.
+class ProgramClassInfo:
+  """Info class attached associated with a Program class.
 
   We track any state in a dedicated object in order to avoid polluting the
   namespace.
@@ -236,7 +236,7 @@ class ModuleClassInfo:
 
     # Infer if it is a global def.
     if not _is_global_tree(value):
-      raise TypeError(f"cannot set arbitrary Python value '{key}' on module: "
+      raise TypeError(f"cannot set arbitrary Python value '{key}' on program: "
                       f"{value!r}")
 
     # Fallback treat it as an initialized, immutable global.
@@ -289,8 +289,8 @@ class ModuleClassInfo:
     return finfo
 
 
-class ModuleInstanceInfo:
-  """Info class associated witha Module instance."""
+class ProgramInstanceInfo:
+  """Info class associated with a Program instance."""
   __slots__ = [
       "_loaded_runtime_module",
       "class_info",
@@ -300,13 +300,13 @@ class ModuleInstanceInfo:
       "shadow_dict",
   ]
 
-  def __init__(self, class_info: ModuleClassInfo,
+  def __init__(self, class_info: ProgramClassInfo,
                context: Optional[ir.Context]):
     self.class_info = class_info
     self.export_module = ExportModule.create_empty(context=context,
                                                    name=class_info.export_name)
     # The shadow dict holds instance attributes. We stash them here and the
-    # Module instance itself arbitrates access via getattr/setattr.
+    # Program instance itself arbitrates access via getattr/setattr.
     self.shadow_dict = dict()
     self.compilation_phase = CompilationPhase.NONE
     self._compiled_artifact: Optional[CompiledArtifact] = None
@@ -318,9 +318,9 @@ class ModuleInstanceInfo:
     if self.compilation_phase >= CompilationPhase.COMPILED:
       return self._compiled_artifact
     if self.compilation_phase != CompilationPhase.IMPORTED:
-      raise RuntimeError(f"Cannot compile module because it is not imported "
+      raise RuntimeError(f"Cannot compile program because it is not imported "
                          f"(phase is {self.compilation_phase}")
-    logging.debug("Compiling module...")
+    logging.debug("Compiling program...")
     # TODO: Obviously much more to do here.
     vm_binary = iree_tools.compile_str(str(self.export_module.module),
                                        target_backends=["cpu"],
@@ -357,20 +357,20 @@ class ModuleInstanceInfo:
 
 
 ################################################################################
-# Use weak references to track info objects for module classes and instances
+# Use weak references to track info objects for program classes and instances
 ################################################################################
 
-_module_class_infos: Dict["ModuleMeta",
-                          ModuleClassInfo] = weakref.WeakKeyDictionary()
-_module_infos: Dict["Module", ModuleInstanceInfo] = weakref.WeakKeyDictionary()
+_program_class_infos: Dict["ProgramMeta",
+                          ProgramClassInfo] = weakref.WeakKeyDictionary()
+_program_infos: Dict["Program", ProgramInstanceInfo] = weakref.WeakKeyDictionary()
 
 ################################################################################
-# Module metaclass and class
+# Program metaclass and class
 ################################################################################
 
 _allow_user_subclasses = False
 
-ModuleClassOrInstance = Union["ModuleMeta", "Module"]
+ProgramClassOrInstance = Union["ProgramMeta", "Program"]
 
 
 @property
@@ -382,10 +382,10 @@ def _uncallable_public_export(*args, **kwargs):
   raise RuntimeError(f"Calls to exported functions not yet supported")
 
 
-class ModuleMeta(type):
-  """Meta class for all modules.
+class ProgramMeta(type):
+  """Meta class for all programs.
 
-  Do not use directly (subclass Module).
+  Do not use directly (subclass Program).
   """
 
   def __new__(mcls,
@@ -398,12 +398,12 @@ class ModuleMeta(type):
       # Still defining this API, so not creating user subclasses yet.
       return type.__new__(mcls, name, bases, dct)
 
-    export_name = _derive_module_export_name(name, export_name)
-    logger.debug("Create new Module subclass: %s", export_name)
-    info = ModuleClassInfo(export_name=export_name)
+    export_name = _derive_program_export_name(name, export_name)
+    logger.debug("Create new Program subclass: %s", export_name)
+    info = ProgramClassInfo(export_name=export_name)
 
     # Enumerate and transform attribute assignments.
-    # We remove anything that we decide is a dynamic part of the module.
+    # We remove anything that we decide is a dynamic part of the program.
     # They will be resolved dynamically at the instance level.
     remove_keys = set()
     for key, attr in dct.items():
@@ -416,69 +416,69 @@ class ModuleMeta(type):
     for key in remove_keys:
       del dct[key]
 
-    # Hide any static attributes defined on the Module class. We only want them
-    # to be accessible as `Module.foo` and not to pollute subclass namespaces.
+    # Hide any static attributes defined on the Program class. We only want them
+    # to be accessible as `Program.foo` and not to pollute subclass namespaces.
     # This must be done after we process user specified attributes to hide
     # any remaining.
-    for key in _STATIC_MODULE_ATTRIBUTES:
+    for key in _STATIC_PROGRAM_ATTRIBUTES:
       if key not in dct:
         dct[key] = _hide_instance_attribute
 
     # Attach the info instance.
     new_class = type.__new__(mcls, name, bases, dct)
-    _module_class_infos[new_class] = info
+    _program_class_infos[new_class] = info
     return new_class
 
   def __getattr__(cls, key):
-    # The Module base class has no info object and does not need dynamic
+    # The Program base class has no info object and does not need dynamic
     # resolution.
-    if cls is Module:
-      raise AttributeError(f"Module.{key}")
-    info = Module.get_class_info(cls)
+    if cls is Program:
+      raise AttributeError(f"Program.{key}")
+    info = Program.get_class_info(cls)
     try:
       return info.all_exports[key]
     except KeyError:
       raise AttributeError
 
 
-_STATIC_MODULE_ATTRIBUTES = (
+_STATIC_PROGRAM_ATTRIBUTES = (
     "_get_instance",
     "export_global",
     "get_class_info",
     "get_compiled_artifact",
     "get_info",
-    "get_mlir_module",
+    "get_mlir_program",
     "like",
     "store_global",
     "kernel",
 )
 
 
-class Module(metaclass=ModuleMeta):
-  """Base class for all user-defined staged modules."""
+class Program(metaclass=ProgramMeta):
+  """Base class for all user-defined staged programs."""
 
   @staticmethod
-  def get_class_info(cls: "ModuleMeta") -> ModuleClassInfo:
-    return _module_class_infos[cls]
+  def get_class_info(cls: "ProgramMeta") -> ProgramClassInfo:
+    return _program_class_infos[cls]
 
   @staticmethod
-  def get_info(inst: "Module") -> ModuleInstanceInfo:
-    return _module_infos[inst]
+  def get_info(inst: "Program") -> ProgramInstanceInfo:
+    return _program_infos[inst]
 
   @staticmethod
-  def _get_instance(m: ModuleClassOrInstance) -> "Module":
-    if isinstance(m, ModuleMeta):
+  def _get_instance(m: ProgramClassOrInstance) -> "Program":
+    if isinstance(m, ProgramMeta):
       m = m()
     return m
 
   @staticmethod
-  def get_compiled_artifact(m: ModuleClassOrInstance) -> CompiledArtifact:
-    info = Module.get_info(Module._get_instance(m))
+  def get_compiled_artifact(m: ProgramClassOrInstance) -> CompiledArtifact:
+    info = Program.get_info(Program._get_instance(m))
     return info.compiled_artifact
 
   @staticmethod
-  def get_mlir_module(m: ModuleClassOrInstance) -> ir.Module:
-    info = Module.get_info(Module._get_instance(m))
+  def get_mlir_module(m: ProgramClassOrInstance) -> ir.Module:
+    info = Program.get_info(Program._get_instance(m))
     return info.export_module.module
 
   @staticmethod
@@ -525,8 +525,8 @@ class Module(metaclass=ModuleMeta):
               import_only: bool = False,
               **kwargs):
     self = super().__new__(cls, *args, **kwargs)
-    info = ModuleInstanceInfo(Module.get_class_info(cls), context=context)
-    _module_infos[self] = info
+    info = ProgramInstanceInfo(Program.get_class_info(cls), context=context)
+    _program_infos[self] = info
 
     # Instantiate globals.
     for key, global_def in info.class_info.export_globals:
@@ -565,7 +565,7 @@ class Module(metaclass=ModuleMeta):
       _ = info.compiled_artifact
 
     # Now that tracing is complete, rebind the export functions so that they
-    # redirect to the runtime, jitted module. By rebinding here, we avoid
+    # redirect to the runtime, jitted program. By rebinding here, we avoid
     # the possibility that such runtime-only functions can be invoked prior
     # to completely importing.
     for key, _ in info.class_info.export_functions:
@@ -574,24 +574,24 @@ class Module(metaclass=ModuleMeta):
     return self
 
   def __getattr__(self, name):
-    info = Module.get_info(self)
+    info = Program.get_info(self)
     try:
       return info.shadow_dict[name]
     except KeyError as e:
       raise AttributeError(f"Attribute {name} not defined") from e
 
   def __setattr__(self, name, value):
-    info = Module.get_info(self)
+    info = Program.get_info(self)
     try:
       info.class_info.lookup_global(name)
     except KeyError:
       raise AttributeError(
-          f"Can only set globals on a Module. Attempted to set {name} = "
+          f"Can only set globals on a Program. Attempted to set {name} = "
           f"{value}")
     builtins.store_global(info.shadow_dict[name], value)
 
 
-# Now enable any new subclasses with a StagedModuleMeta metaclass to be treated
+# Now enable any new subclasses with a StagedProgramMeta metaclass to be treated
 # as user classes.
 _allow_user_subclasses = True
 
@@ -600,17 +600,17 @@ _allow_user_subclasses = True
 ################################################################################
 
 
-def _derive_module_export_name(class_name: str, explicit_name: Optional[str]):
-  """Returns an appropriate module export name given a class name and override.
+def _derive_program_export_name(class_name: str, explicit_name: Optional[str]):
+  """Returns an appropriate program export name given a class name and override.
 
   If an explicit_name is given, that is used as is. Otherwise, the class name
   is mangled by:
-    * Removing and "Module" suffix.
+    * Removing and "Program" suffix.
     * Converting camel case to snake case.
   """
   if explicit_name:
     return explicit_name
-  return _to_snake_case(_strip_suffix(class_name, "Module"))
+  return _to_snake_case(_strip_suffix(class_name, "Program"))
 
 
 def _to_snake_case(s: str) -> str:

@@ -15,10 +15,10 @@
 
 import numpy as np
 import unittest
-from iree.jax import module_api
+from iree.jax import program_api
 
-from iree.jax.module_api import (
-  Module
+from iree.jax.program_api import (
+  Program
 )
 
 import logging
@@ -26,51 +26,51 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 
 
-class ModuleApiTest(unittest.TestCase):
+class ProgramApiTest(unittest.TestCase):
 
   def test_base_class_omits_info(self):
     with self.assertRaises(KeyError):
-      Module.get_class_info(Module)
+      Program.get_class_info(Program)
 
   def test_info(self):
 
-    class MySubclass(Module):
+    class MySubclass(Program):
       ...
 
-    class_info = Module.get_class_info(MySubclass)
+    class_info = Program.get_class_info(MySubclass)
     self.assertEqual(class_info.export_name, "my_subclass")
     inst1 = MySubclass(import_only=True)
     inst2 = MySubclass(import_only=True)
-    info1 = Module.get_info(inst1)
-    info2 = Module.get_info(inst2)
+    info1 = Program.get_info(inst1)
+    info2 = Program.get_info(inst2)
     self.assertIsNot(info1, info2)
     self.assertEqual(info1.class_info.export_name, "my_subclass")
 
   def test_explicit_export_name(self):
 
-    class MySubclass(Module, export_name="Foobar"):
+    class MySubclass(Program, export_name="Foobar"):
       ...
 
-    class_info = Module.get_class_info(MySubclass)
+    class_info = Program.get_class_info(MySubclass)
     self.assertEqual(class_info.export_name, "Foobar")
 
   def test_def_function(self):
 
-    class Nullary(Module):
+    class Nullary(Program):
 
       def f(self):
         ...
 
-    class Unary(Module):
+    class Unary(Program):
 
-      def f(self, a=Module.like(np.asarray(0))):
+      def f(self, a=Program.like(np.asarray(0))):
         ...
 
     self.assertEqual(repr(Unary.f), "<def f([ShapedArray(int32[])])>")
 
   def test_global(self):
 
-    class Global(Module):
+    class Global(Program):
       my_global = np.asarray(0)
 
     self.assertEqual(
@@ -79,7 +79,7 @@ class ModuleApiTest(unittest.TestCase):
 
   def test_builtins_hidden(self):
 
-    class Hidden(Module):
+    class Hidden(Program):
       # Should be able to define something with a builtin name.
       def export_global(self):
         ...
@@ -90,7 +90,7 @@ class ModuleApiTest(unittest.TestCase):
 
     # Verify that everything except 'export_global' defined above raises
     # AttributeError.
-    for key in module_api._STATIC_MODULE_ATTRIBUTES:
+    for key in program_api._STATIC_PROGRAM_ATTRIBUTES:
       if key != "export_global":
         with self.assertRaises(AttributeError):
           _ = getattr(instance, key)
@@ -101,7 +101,7 @@ class ModuleApiTest(unittest.TestCase):
         "export function 'missing_self' is expected to have at least a 'self' parameter"
     ):
 
-      class Error(Module):
+      class Error(Program):
 
         def missing_self():
           ...
@@ -111,7 +111,7 @@ class ModuleApiTest(unittest.TestCase):
         TypeError,
         "export function 'do_something' can only have positional parameters"):
 
-      class Error(Module):
+      class Error(Program):
 
         def do_something(self, *, a):
           ...
@@ -120,16 +120,16 @@ class ModuleApiTest(unittest.TestCase):
     with self.assertRaisesRegex(
         TypeError, "expected tree of abstract values but got: False"):
 
-      class Error(Module):
+      class Error(Program):
 
         def do_something(self, a=False):
           ...
 
   def test_export_illegal_global(self):
     with self.assertRaisesRegex(
-        TypeError, "cannot set arbitrary Python value 'foobar' on module:"):
+        TypeError, "cannot set arbitrary Python value 'foobar' on program:"):
 
-      class Error(Module):
+      class Error(Program):
         foobar = object()
 
 

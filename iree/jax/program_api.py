@@ -398,7 +398,7 @@ class ProgramMeta(type):
       # Still defining this API, so not creating user subclasses yet.
       return type.__new__(mcls, name, bases, dct)
 
-    export_name = _derive_program_export_name(name, export_name)
+    export_name = _derive_module_export_name(name, export_name)
     logger.debug("Create new Program subclass: %s", export_name)
     info = ProgramClassInfo(export_name=export_name)
 
@@ -447,7 +447,7 @@ _STATIC_PROGRAM_ATTRIBUTES = (
     "get_class_info",
     "get_compiled_artifact",
     "get_info",
-    "get_mlir_program",
+    "get_mlir_module",
     "like",
     "store_global",
     "kernel",
@@ -600,8 +600,8 @@ _allow_user_subclasses = True
 ################################################################################
 
 
-def _derive_program_export_name(class_name: str, explicit_name: Optional[str]):
-  """Returns an appropriate program export name given a class name and override.
+def _derive_module_export_name(class_name: str, explicit_name: Optional[str]):
+  """Returns an appropriate module export name given a class name and override.
 
   If an explicit_name is given, that is used as is. Otherwise, the class name
   is mangled by:

@@ -22,7 +22,7 @@ import jax.numpy as jnp
 import numpy as np
 
 # pytype thinks iree.jax is jax.
-# pytype: disable=program-attr
+# pytype: disable=module-attr
 
 TOLERANCE = {"rtol": 1e-6, "atol": 1e-6}
 

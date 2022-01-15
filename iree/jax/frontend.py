@@ -25,12 +25,12 @@ import iree.runtime
 
 try:
   import jax
-except ProgramNotFoundError as e:
-  raise ProgramNotFoundError("iree.jax requires 'jax' and 'jaxlib' to be "
+except ModuleNotFoundError as e:
+  raise ModuleNotFoundError("iree.jax requires 'jax' and 'jaxlib' to be "
                             "installed in your python environment.") from e
 
 # pytype thinks iree.jax is jax.
-# pytype: disable=program-attr
+# pytype: disable=module-attr
 
 __all__ = [
     "aot",

@@ -19,12 +19,12 @@ compiles to IREE. It doesn't do anything interesting but is a place to
 write comments and explanations.
 
 ```python
-# Everything that is needed for basic use can be accessed from the Module
+# Everything that is needed for basic use can be accessed from the Program
 # class. Some additional imports may be needed for more advanced cases.
-from iree.jax import Module
+from iree.jax import Program
 
-# Host-side arrays and trees of arrays can be mirrored into an IREE Module.
-# All structure and any aliasing between trees is retained in the module.
+# Host-side arrays and trees of arrays can be mirrored into an IREE Program.
+# All structure and any aliasing between trees is retained in the program.
 x = jnp.ones((3, 4), jnp.float32) * 4.0
 b = jnp.ones((3, 4), jnp.float32)
 
@@ -33,14 +33,14 @@ Params = namedtuple("Params", "x,b")
 params = Params(x, b)
 
 
-class TrivialKernel(Module):
-  """By sub-classing `jax.iree.Module`, you create an IREE program which can
+class TrivialKernel(Program):
+  """By sub-classing `jax.iree.Program`, you create an IREE program which can
   be compiled (and executed in the host process) by instantiating it.
 
-  The module's name is by default the snake_case equivalent of the class name
-  with any "Module" suffix removed. It can be specified explicitly via:
+  The program's name is by default the snake_case equivalent of the class name
+  with any "Program" suffix removed. It can be specified explicitly via:
 
-    class MyModule(Module, export_name="foobar"):
+    class MyProgram(Program, export_name="foobar"):
   """
 
   # Globals are created by giving names in the class to arrays and trees of
@@ -52,7 +52,7 @@ class TrivialKernel(Module):
   # for exporting a global. Using this form allows you to create uninitialized
   # globals or annotate them as immutable (the compiler will generally figure
   # this out for you).
-  # _params = Module.export_global(params, initialize=True, mutable=True)
+  # _params = Program.export_global(params, initialize=True, mutable=True)
 
   # Sometimes it is useful to give a name to an aliased part of a tree. This
   # is fully allowed. The first statement in the class which exports any
@@ -63,48 +63,48 @@ class TrivialKernel(Module):
 
   # Any function defined without annotation becomes a public function in the
   # IREE program with an input signature derived from the declaration and
-  # outputs derived by tracing. We call these "Module Procedures".
+  # outputs derived by tracing. We call these "Program Procedures".
   # This function just provides an accessor to get the tree of _params.
   def get_params(self):
     return self._params
 
-  # Here we see how to specify an input signature. The `Module.like` helper
+  # Here we see how to specify an input signature. The `Program.like` helper
   # is just producing a tree of `jax.core.AbstractValue` representing some
   # reference from the host program. This is an easy way to represent such
   # details, but users are also free to constract AbstractValue trees
   # themselves.
-  def run(self, multiplier=Module.like(x)):
+  def run(self, multiplier=Program.like(x)):
     # When tracing a public function, the primary thing you can do is call
     # immutable kernel functions using combinations of function arguments and
-    # module globals.
+    # program globals.
     result = self._linear(multiplier, self._params.x, self._params.b)
-    # Module globals can be updated directly via assignment. This is a sugared
-    # form of the more general `Module.store_global()` helper.
+    # Program globals can be updated directly via assignment. This is a sugared
+    # form of the more general `Program.store_global()` helper.
     self._x = result
     return result
 
   # Public functions can also accept arbitrary trees.
-  def set_params(self, new_params=Module.like(params)):
+  def set_params(self, new_params=Program.like(params)):
     # And trees of globals can be updated in one assignment.
     self._params = new_params
 
   # "Kernel" functions are basically equivalent to `jax.jit` but specially
-  # wrapped so that they can exist as members of a Module. They act like
+  # wrapped so that they can exist as members of a Program. They act like
   # staticmethods (i.e. they do not take a `self`) and they can only operate on
   # arguments or host process state that is legal for `jax.jit`. Think of them
-  # as private static functions of the module, and by convention we name them
+  # as private static functions of the program, and by convention we name them
   # with a leading underscore.
-  @Module.kernel
+  @Program.kernel
   def _linear(m, x, b):
     return m * x + b
 
-# Instantiating a module will trace it and invoke the `ireec` compiler on it.
+# Instantiating a program will trace it and invoke the `ireec` compiler on it.
 # keyword arguments control compilation behavior. The defaults should be
 # reasonable for running directly on the host.
 m = TrivialKernel()
 
 # You can inspect the MLIR module which was extracted.
-print(Module.get_mlir_module(m))
+print(Program.get_mlir_module(m))
 
 # While the primary purpose of extracting a program is to run it *elsewhere*,
 # you can't spell "ML" without "debugging", and instantiated modules are fully
@@ -121,7 +121,7 @@ print("Run:", m.run(update))
 print("Updated params:", m.get_params())
 
 # You can save off the compiled artifact to run elsewhere.
-Module.get_compiled_artifact(m).save("/tmp/some_file.vmfb")
+Program.get_compiled_artifact(m).save("/tmp/some_file.vmfb")
 ```
 
 ## What is a JAX program?
@@ -187,10 +187,10 @@ An IREE program is:
   same bus, etc). Horizontal distribution is intended to be a layer atop IREE
   if desired.
 
-## Module Procedures
+## Program Procedures
 
-As mentioned above, "Module Procedures" are the public functions that can be
-invoked on a compiled Module. Today, they are implemented with a limited
+As mentioned above, "Program Procedures" are the public functions that can be
+invoked on a compiled Program. Today, they are implemented with a limited
 tracer which defines them by run. A Python based compiler is under development
 to allow more sophisticated procedures to be represented.
 
@@ -198,7 +198,7 @@ The following are allowed in a traced procedure (this is restricted in order
 to maintain a small surface area for a future compiler-based approach -- in
 reality, there are many ways to hack the current system to do more):
 
-* Referencing Module globals and kernel functions by resolving attributes
+* Referencing Program globals and kernel functions by resolving attributes
   against `self`.
 * Accessing nested dict/list/tuple/namedtuple members of the above with
   attribute notation (i.e. `parent.child`) or indexing (i.e. `parent[0]`).
@@ -206,8 +206,8 @@ reality, there are many ways to hack the current system to do more):
 * Assigning to a global.
 * Returning values.
 * Using one of the builtin intrinsics:
-  * `Module.store_global`
-  * `Module.print` (TODO)
+  * `Program.store_global`
+  * `Program.print` (TODO)
 
 
 # Development

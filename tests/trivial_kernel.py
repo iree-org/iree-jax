@@ -21,7 +21,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-from iree.jax import kernel, like, Module
+from iree.jax import kernel, like, Program
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -33,7 +33,7 @@ Params = namedtuple("Params", "x,b")
 params = Params(x, b)
 
 
-class TrivialKernel(Module):
+class TrivialKernel(Program):
 
   _params = params
 
@@ -58,7 +58,7 @@ class TrivialKernel(Module):
 
 # CHECK-LABEL: module @trivial_kernel
 m = TrivialKernel()
-print(Module.get_mlir_module(m))
+print(Program.get_mlir_module(m))
 
 print("Initial params:", m.get_params())
 # TODO: Runtime should be able to directly take Jax arrays.

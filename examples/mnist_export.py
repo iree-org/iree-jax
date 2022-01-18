@@ -36,7 +36,7 @@ from jax.tree_util import (tree_map, tree_flatten, tree_unflatten,
 
 from iree.jax import (
   like,
-  Module,
+  Program,
 )
 
 
@@ -48,11 +48,11 @@ def main(args):
 
   print("Saving mlir...")
   with open(os.path.join(output_dir, "mnist_train.mlir"), "wb") as f:
-    Module.get_mlir_module(compiled_module).operation.print(f, binary=True)
+    Program.get_mlir_module(compiled_module).operation.print(f, binary=True)
 
   print("Saving binary...")
   with open(os.path.join(output_dir, "mnist_train.vmfb"), "wb") as f:
-    f.write(Module.get_compiled_artifact(compiled_module).vm_binary)
+    f.write(Program.get_compiled_artifact(compiled_module).vm_binary)
 
 
 def build_model():
@@ -77,10 +77,10 @@ def build_model():
 
   example_batch = get_example_batch()
 
-  class MnistModule(Module):
+  class MnistModule(Program):
     # We don't want to export the host-side initial values, so export those
     # first and disable initialization.
-    _params = Module.export_global(init_params, initialize=False)
+    _params = Program.export_global(init_params, initialize=False)
     _opt_state = opt_state
 
     def get_params(self):
@@ -102,17 +102,17 @@ def build_model():
     def predict(self, inputs=like(example_batch[0])):
       return self._predict_target_class(self._params, inputs)
 
-    @Module.kernel
+    @Program.kernel
     def _initialize_optimizer(rng):
       _, init_params = init_random_params(rng, (-1, 28 * 28))
       return opt_init(init_params)
 
-    @Module.kernel
+    @Program.kernel
     def _update_step(batch, opt_state):
       params = opt_get_params(opt_state)
       return opt_update(0, grad(loss)(params, batch), opt_state)
 
-    @Module.kernel
+    @Program.kernel
     def _predict_target_class(params, inputs):
       predicted_class = jnp.argmax(predict(params, inputs), axis=1)
       return predicted_class

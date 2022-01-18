@@ -21,6 +21,7 @@ from iree.compiler import (
     ir,
     passmanager,
 )
+from iree.compiler.tools import debugging
 from iree.compiler.transforms import ireec
 
 import jax.core
@@ -87,14 +88,23 @@ def import_module(context: ir.Context, module: Union[str, ir.Module]):
   if isinstance(module, ir.Module):
     if module.context is context:
       return module
-    # TODO: Fix upstream so that parse can accept bytes and then enable
-    # binary=True.
-    module = module.operation.get_asm(enable_debug_info=True)
+    module = module.operation.get_asm(enable_debug_info=True,
+                                      binary=True,
+                                      print_generic_op_form=True)
 
-  if not isinstance(module, str):
+  if not isinstance(module, (bytes, str)):
     raise ValueError(
         f"Attempted to import a non-module (did you enable MLIR in JAX?). "
         f"Got {module}")
+
+  # Save a temporary.
+  with debugging.TempFileSaver.implicit() as tfs:
+    debug_input_path = tfs.alloc_optional("jax_mhlo_module.mlir")
+    if debug_input_path:
+      with open(debug_input_path,
+                "wt" if isinstance(module, str) else "wb") as f:
+        f.write(module)
+
   new_module = ir.Module.parse(module, context=context)
   return new_module
 

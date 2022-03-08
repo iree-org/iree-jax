@@ -83,18 +83,21 @@ def unwrap_global_array(x) -> Optional[array_types.ExportedGlobalArray]:
   return x
 
 
-def import_module(context: ir.Context, module: Union[str, ir.Module]):
+def import_module(context: ir.Context, module: Union[bytes, str, ir.Module,
+                                                     jax_ir.Module]):
   if isinstance(module, ir.Module):
+    # One of ours - just return if from our context.
     if module.context is context:
       return module
-    # TODO: Fix upstream so that parse can accept bytes and then enable
-    # binary=True.
-    module = module.operation.get_asm(enable_debug_info=True)
 
-  if not isinstance(module, str):
+  if isinstance(module, (ir.Module, jax_ir.Module)):
+    # Foreign (either across an ABI boundary or a different context): Serialize.
+    module = module.operation.get_asm(enable_debug_info=True, binary=True)
+
+  if not isinstance(module, (bytes, str)):
     raise ValueError(
         f"Attempted to import a non-module (did you enable MLIR in JAX?). "
-        f"Got {module}")
+        f"Got {module.__class__} = {module}")
   new_module = ir.Module.parse(module, context=context)
   return new_module
 

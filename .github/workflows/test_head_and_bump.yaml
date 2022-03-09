@@ -1,0 +1,25 @@
+name: Test at head and bump pinned deps
+
+on:
+  workflow_dispatch:
+
+
+jobs:
+  install_test:
+    name: Install and Test
+    runs-on: ubuntu-18.04
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-python@v2
+        name: Install Python
+        with:
+          python-version: '3.8'
+
+      - name: Run test script
+        run: |
+          python $GITHUB_WORKSPACE/build_tools/install_and_test.py
+
+      # TODO: Once happy with the above commit any changes to pinned
+      # version_info.json and push.

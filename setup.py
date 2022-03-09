@@ -28,6 +28,14 @@ except FileNotFoundError:
 PACKAGE_SUFFIX = version_info.get("package-suffix") or "-dev"
 PACKAGE_VERSION = version_info.get("package-version") or "0.1dev1"
 
+
+def get_pinned_package(name):
+  pinned_versions = version_info.get("pinned-versions")
+  if not pinned_versions or name not in pinned_versions:
+    return name
+  else:
+    return f"name=={pinned_versions[name]}"
+
 setup(
     name=f"iree-jax{PACKAGE_SUFFIX}",
     version=f"{PACKAGE_VERSION}",
@@ -37,16 +45,16 @@ setup(
     ],),
     install_requires=[
         "numpy",
-        "jax",
-        "iree-compiler",
-        "iree-runtime",
+        get_pinned_package("jax"),
+        get_pinned_package("iree-compiler"),
+        get_pinned_package("iree-runtime"),
     ],
     extras_require={
       "xla": [
-        "iree-tools-xla",
+        get_pinned_package("iree-tools-xla"),
       ],
       "cpu": [
-        "jax[cpu]",
+        get_pinned_package("jaxlib"),
       ],
       "test": [
         "lit",

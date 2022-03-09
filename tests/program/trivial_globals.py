@@ -49,9 +49,9 @@ instance = TrivialGlobals()
 # CHECK: iree_input.global private mutable @_params$0 = dense<0.000000e+00> : tensor<3x4xf32>
 # CHECK: iree_input.global private mutable @_params$1 = dense<0.000000e+00> : tensor<3x4xf32>
 # CHECK: func @get_params() -> (tensor<3x4xf32>, tensor<3x4xf32>)
-# CHECK:   %[[LOAD0:.*]] = iree_input.global.load @_params$0 : tensor<3x4xf32>
-# CHECK:   %[[LOAD1:.*]] = iree_input.global.load @_params$1 : tensor<3x4xf32>
-# CHECK:   return %[[LOAD0]], %[[LOAD1]]
+# CHECK:   %0 = iree_input.global.load @_params$0 : tensor<3x4xf32>
+# CHECK:   %1 = iree_input.global.load @_params$1 : tensor<3x4xf32>
+# CHECK:   return %0, %1
 # CHECK: func @set_params(%arg0: tensor<3x4xf32>, %arg1: tensor<3x4xf32>)
 # CHECK:   iree_input.global.store %arg0, @_params$0 : tensor<3x4xf32>
 # CHECK:   iree_input.global.store %arg1, @_params$1 : tensor<3x4xf32>

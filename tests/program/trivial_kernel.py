@@ -56,7 +56,7 @@ class TrivialKernel(Program):
     return m * x + b
 
 
-# CHECK-LABEL: module @trivial_kernel
+# CHECK: module @trivial_kernel
 m = TrivialKernel()
 print(Program.get_mlir_module(m))
 

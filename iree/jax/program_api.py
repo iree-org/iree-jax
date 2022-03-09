@@ -322,7 +322,18 @@ class ProgramInstanceInfo:
                          f"(phase is {self.compilation_phase}")
     logging.debug("Compiling program...")
     # TODO: Obviously much more to do here.
-    vm_binary = iree_tools.compile_str(str(self.export_module.module),
+    # Perform verification and serialization explicitly so that we can
+    # better control the error messaging in the case of illegal programs
+    # being generated.
+    ir_module = self.export_module.module
+    if not ir_module.operation.verify():
+      raise RuntimeError(
+          f"Generated program failed to verify: "
+          f"{ir_module.operation.get_asm(print_generic_op_form=True)}")
+    ir_module_serialized = ir_module.operation.get_asm(binary=True,
+                                                       assume_verified=True)
+    # Compile via ireec.
+    vm_binary = iree_tools.compile_str(ir_module_serialized,
                                        target_backends=["cpu"],
                                        input_type="mhlo")
     self._compiled_artifact = CompiledArtifact.from_memory_buffer(vm_binary)
@@ -361,8 +372,9 @@ class ProgramInstanceInfo:
 ################################################################################
 
 _program_class_infos: Dict["ProgramMeta",
-                          ProgramClassInfo] = weakref.WeakKeyDictionary()
-_program_infos: Dict["Program", ProgramInstanceInfo] = weakref.WeakKeyDictionary()
+                           ProgramClassInfo] = weakref.WeakKeyDictionary()
+_program_infos: Dict["Program",
+                     ProgramInstanceInfo] = weakref.WeakKeyDictionary()
 
 ################################################################################
 # Program metaclass and class

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Optional, Tuple, Union
+from typing import Dict, Optional, Tuple, Union
 from jax.tree_util import tree_all, tree_flatten, tree_leaves, tree_reduce
 
 from . import array_types
@@ -113,33 +113,70 @@ def import_main_function(*,
   Returns (imported symbol name, operation) of the found function (if
   present).
 
-  TODO: This is horrible. Burn it.
+  This destructively mutates the source module.
   """
   context = target_module.context
   source_module = import_module(context, source_module)
   cleanup_mhlo_module(source_module)
 
-  with context:
-    target_body = target_module.body
-    main_symbol_attr = ir.StringAttr.get(main_symbol)
-    found_function = None
-    found_name = None
-    for source_operation in source_module.body.operations:
-      source_operation = source_operation.detach_from_parent()
-      target_body.append(source_operation)
-      # TODO: Really should be checking for the Symbol trait.
-      # TODO: The builtin.func overrides provide a 'name' attribute which
-      # shadows the operation name.
-      found_it = False
-      if "sym_name" in source_operation.attributes:
-        if source_operation.attributes["sym_name"] == main_symbol_attr:
-          found_it = True
-      target_symbol_table.insert(source_operation)
-      if found_it:
-        found_name = ir.StringAttr(
-            source_operation.attributes["sym_name"]).value
-        found_function = source_operation
-        found_function.attributes["sym_visibility"] = ir.StringAttr.get(
-            visibility)
-  assert found_name, f"Imported function {main_symbol} not found"
-  return found_name
+  # Local aliases for brevity.
+  StringAttr = ir.StringAttr
+  SymbolTable = ir.SymbolTable
+
+  # Pre-process the source module to uniqueify names.
+  source_symbol_table = SymbolTable(source_module.operation)
+  source_prefix = (
+      StringAttr(SymbolTable.get_symbol_name(source_module.operation)).value +
+      "$")
+
+  # Iterate over top-level symbol ops and unique the names.
+  nested_symbol_table_ops = []
+  nested_symbol_ops = []
+  rename_map: Dict[str, str] = {}
+
+  target_body = target_module.body
+  for source_operation in source_module.body.operations:
+    source_operation = source_operation.detach_from_parent()
+    target_body.append(source_operation)
+
+    # TODO: Add SymbolTable.is_symbol_table upstream and use that vs "sym_name"
+    # check.
+    if "sym_name" not in source_operation.attributes:
+      continue
+    nested_symbol_ops.append(source_operation)
+    nested_symbol_table_ops.append(source_operation)
+
+    symbol_name = (StringAttr(
+        SymbolTable.get_symbol_name(source_operation)).value)
+    qualified_name = uniqueify_name(source_prefix, symbol_name,
+                                    source_symbol_table)
+    rename_map[symbol_name] = qualified_name
+    SymbolTable.set_symbol_name(source_operation, qualified_name)
+    SymbolTable.set_visibility(source_operation, "private")
+
+  # Now, iterate back through and RAUW renamed symbols.
+  # TODO: The API forces us to do as many walks as symbols to rename. Maybe
+  # introduce something upstream that inverts this (i.e. walk once, rename
+  # a set of symbols at a time).
+  for sym_operation in nested_symbol_table_ops:
+    for from_name, to_name in rename_map.items():
+      SymbolTable.replace_all_symbol_uses(from_name, to_name, sym_operation)
+
+  # Update the target symbol table now that all renames are done.
+  for symbol_op in nested_symbol_ops:
+    target_symbol_table.insert(symbol_op)
+
+  found_main_name = rename_map.get(main_symbol)
+  assert found_main_name is not None, f"Imported function {main_symbol} not found"
+  return found_main_name
+
+
+def uniqueify_name(prefix: str, local_name: str, st: ir.SymbolTable):
+  index = -1
+  while True:
+    index += 1
+    full_name = prefix + local_name
+    if index > 0:
+      full_name += f"${index}"
+    if full_name not in st:
+      return full_name

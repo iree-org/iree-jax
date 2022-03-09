@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Original HLO-proto based function compilation.
 
 This API is being gradually replaced but is supported until an alternative
@@ -65,7 +64,9 @@ def aot(function, *args, **options):
   """
   xla_comp = jax.xla_computation(function)(*args)
   hlo_proto = xla_comp.as_serialized_hlo_module_proto()
-  return iree.compiler.tools.xla.compile_str(hlo_proto, **options)
+  return iree.compiler.tools.xla.compile_str(hlo_proto,
+                                             input_type="xla",
+                                             **options)
 
 
 # A more JAX-native approach to jitting would be desireable here, however

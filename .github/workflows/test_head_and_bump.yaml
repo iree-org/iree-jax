@@ -2,7 +2,8 @@ name: Test at head and bump pinned deps
 
 on:
   workflow_dispatch:
-
+  schedule:
+    - cron: '0 20 * * *'
 
 jobs:
   install_test:

@@ -57,7 +57,7 @@ def main():
   print("*** INSTALLED VERSIONS:", pinned_versions)
 
   print("*** Running tests...")
-  subprocess.check_call(["lit", "tests/"], cwd=project_root)
+  subprocess.check_call(["lit", "-v", "tests/"], cwd=project_root)
 
   print("*** ALL TESTS PASS ***")
   version_info["pinned-versions"] = pinned_versions

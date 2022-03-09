@@ -148,18 +148,6 @@ class JAXFrontendTest(absltest.TestCase):
 
     self.assertEqual(mul_two(3), 6)
 
-  def test_iree_jit_of_empty_iree_jit(self):
-
-    @iree.jax.jit
-    def sqrt_four():
-      return jnp.sqrt(4)
-
-    @iree.jax.jit
-    def add_sqrt_four(a):
-      return a + sqrt_four()
-
-    self.assertEqual(add_sqrt_four(2), 4)
-
   def test_jit_pytree_method(self):
 
     @iree.jax.jit

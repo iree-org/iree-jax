@@ -145,7 +145,7 @@ class ExportModule:
       # We fork between trackable things and static constants. Currently this
       # is just array vs not, but this should match Jax's heuristic.
       # TODO: Make sure this is the right way to detect array.
-      if hasattr(concrete_leaf, "__array__"):
+      if isinstance(concrete_leaf, jax.core.ShapedArray) or hasattr(concrete_leaf, "__array__"):
         leaf_symbol = f"{symbol_name}${tracked_leaf_count}"
         logger.debug("def_global_tree: array %s=%r:%r", leaf_symbol,
                      concrete_leaf.shape, concrete_leaf.dtype)
@@ -223,7 +223,8 @@ class RefInfo:
   ]
 
   def __init__(self, referrent: Any):
-    self._referrent = weakref.ref(referrent)
+    if referrent is not _Empty:
+      self._referrent = weakref.ref(referrent)
     self.tracked_value = _Empty
 
 
@@ -239,7 +240,8 @@ class RefTracker:
     if existing:
       return existing
     info = RefInfo(referrent)
-    weakref.finalize(referrent, self._ref_finalizer, ref_id)
+    if referrent is not _Empty:
+      weakref.finalize(referrent, self._ref_finalizer, ref_id)
     self._refs[ref_id] = info
     return info
 

@@ -1,5 +1,4 @@
 # RUN: %PYTHON %s
-# XFAIL: *
 
 # Copyright 2021 Google LLC
 #

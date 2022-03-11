@@ -76,7 +76,7 @@ def abstractify(x) -> jax.core.AbstractValue:
 
 def unwrap_global_array(x) -> Optional[array_types.ExportedGlobalArray]:
   # TODO: Ugh. Ugh.
-  if isinstance(x, jax.core.ConcreteArray):
+  if isinstance(x, jax.core.ConcreteArray) or isinstance(x, jax.core.ShapedArray):
     x = x.val
   if not isinstance(x, array_types.ExportedGlobalArray):
     return None

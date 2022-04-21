@@ -79,7 +79,7 @@ class JAXFrontendTest(absltest.TestCase):
         },
         jnp.zeros((1, 32)),
     ]
-    binary = iree.jax.aot(pytree_func, *trace_args, target_backends=["vmvx"])
+    binary = iree.jax.aot(pytree_func, *trace_args, target_backends=["cpu"])
 
   def test_jit_pytree_return(self):
 

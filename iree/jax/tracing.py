@@ -19,7 +19,7 @@ from typing import Any, List, Sequence
 from iree.compiler import (
     ir,)
 from iree.compiler.dialects import (
-    builtin as builtin_d,
+    func as func_d,
     iree_input as iree_input_d,
     func as func_d,
 )
@@ -96,7 +96,7 @@ def current_ir_trace() -> IrTrace:
 class FunctionIrTrace(IrTrace):
   """Captures execution into a `func` body."""
 
-  def __init__(self, *, func_op: builtin_d.FuncOp, module: ir.Module,
+  def __init__(self, *, func_op: func_d.FuncOp, module: ir.Module,
                module_symbol_table: ir.SymbolTable):
     self.func_op = func_op
     self.module = module
@@ -149,5 +149,5 @@ class FunctionIrTrace(IrTrace):
       self.return_types = value_types
       ftype = self.func_op.type
       ftype = ir.FunctionType.get(ftype.inputs, value_types)
-      self.func_op.attributes["type"] = ir.TypeAttr.get(ftype)
+      self.func_op.attributes["function_type"] = ir.TypeAttr.get(ftype)
       assert self.func_op.verify(), "Created function is invalid"

@@ -17,7 +17,7 @@ from iree.compiler import (
     ir,)
 
 from iree.compiler.dialects import (
-    builtin as builtin_d,
+    func as func_d,
     chlo as chlo_d,
     iree_input as iree_input_d,
     mhlo as mhlo_d,
@@ -57,9 +57,9 @@ def create_global(symbol_table: ir.SymbolTable,
 
 def create_func_op(
     symbol_table: ir.SymbolTable, symbol_name: str,
-    argument_types: Sequence[ir.Type]) -> Tuple[str, builtin_d.FuncOp]:
+    argument_types: Sequence[ir.Type]) -> Tuple[str, func_d.FuncOp]:
   ftype = ir.FunctionType.get(argument_types, [])
-  func_op = builtin_d.FuncOp(symbol_name, ftype)
+  func_op = func_d.FuncOp(symbol_name, ftype)
   func_op.add_entry_block()
   symbol_table.insert(func_op)
   actual_symbol_name = ir.StringAttr(func_op.attributes["sym_name"]).value

@@ -23,7 +23,7 @@ import logging
 import re
 from typing import Any, Callable, Dict, Generator, Optional, Tuple, Union
 import weakref
-from jax._src.api import Compiled
+from jax._src.stages import Compiled
 
 import jax.core
 from jax.tree_util import tree_leaves, tree_map

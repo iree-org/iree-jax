@@ -96,7 +96,7 @@ class ExportModule:
     # If we have a concrete value, then it may already be associated with a
     # global.
     info = self._refs.track(concrete_value)
-    if info.tracked_value is not _Empty:
+    if info.tracked_value is not _Empty and concrete_value is not _Empty:
       return info.tracked_value
 
     # TODO: Other types?

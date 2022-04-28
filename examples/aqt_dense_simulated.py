@@ -17,15 +17,12 @@
 from collections import namedtuple
 import logging
 
-from iree.jax2.staging_api import *
-from iree.jax2.builtins import *
+from iree.jax import Program, kernel, like
 
 import jax
 import jax.numpy as jnp
 
 logging.basicConfig(level=logging.DEBUG)
-jax.config.update("jax_enable_mlir", True)
-
 
 activation_example = jnp.arange(30, dtype=jnp.float32).reshape(5, 6) / 10.4
 
@@ -60,20 +57,18 @@ def dense(params, activation):
   matmul_result = scaled_result / (params.activation_scale * weight_scale)
   return matmul_result + params.bias[jnp.newaxis, :]
 
+class AqtDenseModule(Program):
 
-class AqtDenseModule(StagedModule):
+  _params = params
 
-  _params = export_global(params, initialize=True, mutable=False)
-
-  @export_kernel
-  def _model(mdl, params, activation):
+  @kernel
+  def model(params, activation):
     activation = dense(params[0], activation)
     activation = dense(params[1], activation)
     return activation
 
-  @export_traced_proc(signature=(activation_example,))
-  def compute_simulated(mdl, activation):
-    return mdl._model(mdl._params, activation)
+  def compute_simulated(self, activation=like(activation_example)):
+    return self.model(self._params, activation)
 
 
-print(get_mlir_module(AqtDenseModule))
+print(Program.get_mlir_module(AqtDenseModule))

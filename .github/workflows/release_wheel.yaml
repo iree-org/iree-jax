@@ -1,0 +1,65 @@
+name: Build and upload Python wheels
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build_sdist:
+    name: Build source distribution
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-python@v2
+        name: Install Python
+        with:
+          python-version: '3.8'
+
+      - name: Install python deps
+        run: |
+          python3 -m pip install gitpython wheel
+
+      - name: Build and check dist
+        run: |
+          package_version="$(printf '%(%Y%m%d)T.${{ github.run_number }}')"
+          echo "package_version=${package_version}" >> $GITHUB_ENV
+
+          git_hash="$(git rev-parse HEAD)"
+          echo "git_hash=${git_hash}" >> $GITHUB_ENV
+
+          python update_version.py ${package_version}
+          python setup.py sdist bdist_wheel
+          ls -al dist/
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ env.package_version }}
+          release_name: iree-jax release at ${{ env.package_version }}
+          body: |
+            Automatic candidate release of iree-jax:
+            https://github.com/google/iree-jax/commit/${{ env.git_hash }}
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Assets
+        id: upload-release-assets
+        uses: dwenegar/upload-release-assets@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          release_id: "${{ steps.create_release.outputs.id }}"
+          assets_path: ./dist/iree_jax*.whl
+
+      - name: Publish Release
+        id: publish_release
+        uses: eregon/publish-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          release_id: ${{ steps.create_release.outputs.id }}

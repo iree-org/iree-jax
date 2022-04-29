@@ -30,8 +30,7 @@ from aqt.jax.imagenet import models
 from aqt.jax.imagenet import train_utils as imagenet_train_utils
 from aqt.jax.imagenet.configs.paper import resnet50_w8_a8_auto
 
-from iree.jax2.staging_api import *
-from iree.jax2.builtins import *
+from iree.jax import Program, kernel, like
 
 FLAGS = flags.FLAGS
 config_flags.DEFINE_config_file('hparams_config_dict',
@@ -40,7 +39,6 @@ config_flags.DEFINE_config_file('hparams_config_dict',
 
 
 def main(argv):
-  jax.config.update("jax_enable_mlir", True)
 
   hparams = os_hparams_utils.load_hparams_from_config_dict(
       hparams_config.TrainingHParams, models.ResNet.HParams,
@@ -69,20 +67,19 @@ def main(argv):
   example_input = jax.ShapedArray((1, 224, 224, 3), dtype=jnp.float32)
 
   class ResnetInferenceModel(StagedModule):
-    _variables = export_global(variables)
+    _variables = variables
 
-    @export_kernel
-    def _predict(mdl, v, image):
+    @kernel
+    def _predict(v, image):
       # TODO: We should just be able to use mdl._variables here, but the
       # illusion is not good enough.
       logits = model.apply(v, image, mutable=False)
       return logits
 
-    @export_traced_proc(signature=[example_input])
-    def predict(mdl, image):
+    def predict(mdl, image=like(example_input)):
       return mdl._predict(mdl._variables, image)
 
-  print(get_mlir_module(ResnetInferenceModel))
+  print(Program.get_mlir_module(ResnetInferenceModel))
 
 
 if __name__ == "__main__":

@@ -4,6 +4,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+import argparse
 import json
 import os
 from setuptools import find_namespace_packages, setup
@@ -24,19 +25,19 @@ except FileNotFoundError:
   print("version_info.json not found. Using defaults")
   version_info = {}
 
-PACKAGE_SUFFIX = version_info.get("package-suffix") or ""
 PACKAGE_VERSION = version_info.get("package-version") or "0.1dev1"
-
 
 def get_pinned_package(name):
   pinned_versions = version_info.get("pinned-versions")
+  use_pinned = version_info.get("use-pinned")
   if not pinned_versions or name not in pinned_versions:
     return name
   else:
-    return f"{name}=={pinned_versions[name]}"
+    restriction = "==" if use_pinned else ">="
+    return f"{name}{restriction}{pinned_versions[name]}"
 
 setup(
-    name=f"iree-jax{PACKAGE_SUFFIX}",
+    name=f"iree-jax",
     version=f"{PACKAGE_VERSION}",
     packages=find_namespace_packages(include=[
         "iree.jax",

@@ -12,15 +12,33 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-
       - uses: actions/setup-python@v2
         name: Install Python
         with:
-          python-version: '3.8'
+          python-version: '3.9'
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Run test script
+      - name: Install deps
         run: |
-          python $GITHUB_WORKSPACE/build_tools/install_and_test.py
+          python3 -m pip install Filecheck
 
-      # TODO: Once happy with the above commit any changes to pinned
-      # version_info.json and push.
+      - name: Run IREE-JAX Installation
+        run: |
+          python $GITHUB_WORKSPACE/build_tools/configure.py
+          python3 -m pip install . -f https://github.com/google/iree/releases --force-reinstall .[xla,cpu,test]
+      
+      - name: Run Tests
+        run: |
+          build_tools/unittest.sh
+
+      - name: Update Pinned Versions
+        run: |
+          python build_tools/update_pinned.py
+          cat version_info.json
+
+      - name: Push updated versions
+        run: |
+          git config --global user.name 'Rob Suderman'
+          git config --global user.email 'rsuderman@users.noreply.github.com'
+          git commit -am "Update pinned versions"
+          git push

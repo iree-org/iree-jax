@@ -1,8 +1,8 @@
 {
   "pinned-versions": {
-    "iree-compiler": "20220415.108",
-    "iree-runtime": "20220415.108",
-    "iree-tools-xla": "20220415.108",
+    "iree-compiler": "20220502.125",
+    "iree-runtime": "20220502.125",
+    "iree-tools-xla": "20220502.125",
     "jax": "0.3.7",
     "jaxlib": "0.3.7"
   }

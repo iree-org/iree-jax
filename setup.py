@@ -47,13 +47,11 @@ setup(
         get_pinned_package("jax"),
         get_pinned_package("iree-compiler"),
         get_pinned_package("iree-runtime"),
+        get_pinned_package("jaxlib"),
     ],
     extras_require={
       "xla": [
         get_pinned_package("iree-tools-xla"),
-      ],
-      "cpu": [
-        get_pinned_package("jaxlib"),
       ],
       "test": [
         "lit",

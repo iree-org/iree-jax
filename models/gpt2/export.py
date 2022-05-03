@@ -18,6 +18,11 @@ from os import path
 
 FLAGS = absl.flags.FLAGS
 
+# Configuration details.
+# B - batch size
+# K - encoder sequence length
+# S - total sequence length
+# T - decode step size
 def CreateGpt2Model(name, B, K, S, T):
   L, _, _, Q, H, _ = model.model_sizes[name]
 

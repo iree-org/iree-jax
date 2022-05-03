@@ -11,8 +11,9 @@ jobs:
     runs-on: ubuntu-18.04
 
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@7884fcad6b5d53d10323aee724dc68d8b9096a2e # v2
+      - uses: actions/setup-python@7f80679172b057fc5e90d70d197929d454754a5a
+
         name: Install Python
         with:
           python-version: '3.9'
@@ -38,7 +39,7 @@ jobs:
 
       - name: Push updated versions
         run: |
-          git config --global user.name 'Rob Suderman'
-          git config --global user.email 'rsuderman@users.noreply.github.com'
+          git config --local user.name "Bump Pinned Versions"
+          git config --local user.email "iree-github-actions-bot@google.com"
           git commit -am "Update pinned versions"
           git push

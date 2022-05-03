@@ -34,9 +34,9 @@ def main():
     sys.exit(1)
 
   pinned = version_info["pinned-versions"]
-  for a in pinned:
-      if a in reqs:
-        pinned[a] = reqs[a]
+  for pinned_lib in pinned:
+      if pinned_lib in reqs:
+        pinned[pinned_lib] = reqs[pinned_lib]
 
   version_info = {a : version_info[a] for a in version_info if a == "pinned-versions"}
 

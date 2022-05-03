@@ -11,7 +11,6 @@ import numpy as np
 # pylint: disable=invalid-name
 def load_gpt2_model(name, gpt2_dir):
   """Load GPT-2 pretrained weights into JAX DeviceArrays."""
-  # TODO(jekbradbury): add target dtype
   with open(path.join(gpt2_dir, 'tf_model.h5'), 'rb') as backend:
     with h5py.File(backend, 'r') as f:
       root = f['transformer']['tfgp_t2lm_head_model']['transformer']

@@ -18,6 +18,7 @@ import subprocess
 import sys
 from subprocess import check_output
 
+'''Update the version_info.json with the currently installed libraries.'''
 def main():
   reqs = subprocess.check_output([sys.executable, '-m', 'pip', 'freeze'])
   reqs = [c.split("==") for c in reqs.decode('ascii').split('\n') if "==" in c]

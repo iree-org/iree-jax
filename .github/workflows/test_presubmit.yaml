@@ -10,17 +10,25 @@ jobs:
     runs-on: ubuntu-18.04
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@7884fcad6b5d53d10323aee724dc68d8b9096a2e # v2
+      - uses: actions/setup-python@7f80679172b057fc5e90d70d197929d454754a5a # v2
 
-      - uses: actions/setup-python@v2
         name: Install Python
         with:
-          python-version: '3.8'
+          python-version: '3.9'
 
-      - name: Run test script
+      - name: Install deps
         run: |
-          # TODO: Add flag to disable removal of pins.
-          python $GITHUB_WORKSPACE/build_tools/install_and_test.py
+          python3 -m pip install Filecheck
+
+      - name: Run installation
+        run: |
+          python $GITHUB_WORKSPACE/build_tools/configure.py --use-pinned
+          python3 -m pip install . -f https://github.com/google/iree/releases --force-reinstall .[xla,cpu,test]
+      
+      - name: Run tests
+        run: |
+          build_tools/unittest.sh
 
       # TODO: Once happy with the above commit any changes to pinned
       # version_info.json and push.

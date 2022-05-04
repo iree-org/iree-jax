@@ -1,0 +1,40 @@
+name: Test GPT-2 with pinned versions.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 21 * * *'
+
+jobs:
+  install_test:
+    name: Install latest iree-jax release and tests GPT-2
+    runs-on: ubuntu-18.04
+
+    steps:
+      - uses: actions/checkout@7884fcad6b5d53d10323aee724dc68d8b9096a2e #v2
+      - uses: actions/setup-python@7f80679172b057fc5e90d70d197929d454754a5a #v2
+
+        name: Install Python
+        with:
+          python-version: '3.9'
+
+      - name: Install Python Dependencies
+        run: |
+          python3 -m pip install absl-py future h5py numpy transformers
+
+      - name: Run installation
+        run: |
+          python $GITHUB_WORKSPACE/build_tools/configure.py --use-pinned
+          python3 -m pip install . -f https://github.com/google/iree/releases --force-reinstall .[xla,cpu,test]
+
+      - name: Fetch GPT-2
+        run: |
+          models/gpt2/setup.sh
+
+      - name: Export GPT-2
+        run: |
+          python $GITHUB_WORKSPACE/models/gpt2/export.py
+
+      - name: Test GPT-2
+        run: |
+          python $GITHUB_WORKSPACE/models/gpt2/test_export.py

@@ -5,5 +5,6 @@
     "iree-tools-xla": "20220502.125",
     "jax": "0.3.7",
     "jaxlib": "0.3.7"
-  }
+  },
+  "use-pinned": true
 }

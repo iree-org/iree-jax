@@ -42,4 +42,4 @@ jobs:
           git config --local user.name "Bump Pinned Versions"
           git config --local user.email "iree-github-actions-bot@google.com"
           git commit -am "Update pinned versions"
-          git push
+          git push origin update-versions

@@ -106,7 +106,6 @@ def import_main_function(*,
   """
   context = target_module.context
   source_module = import_module(context, source_module)
-  cleanup_mhlo_module(source_module)
 
   # Local aliases for brevity.
   StringAttr = ir.StringAttr

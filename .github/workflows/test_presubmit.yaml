@@ -24,7 +24,7 @@ jobs:
       - name: Run installation
         run: |
           python $GITHUB_WORKSPACE/build_tools/configure.py --use-pinned
-          python3 -m pip install . -f https://github.com/google/iree/releases --force-reinstall .[xla,cpu,test]
+          python $GITHUB_WORKSPACE/build_tools/pip_install.py
       
       - name: Run tests
         run: |

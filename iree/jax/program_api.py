@@ -348,7 +348,7 @@ class ProgramInstanceInfo:
       return self._loaded_runtime_module
     artifact = self.compiled_artifact
     # TODO: Support flexible driver selection.
-    rt_config = get_rt_config("dylib")
+    rt_config = get_rt_config("local-task")
     self._loaded_runtime_module = iree_rt.system_api.load_vm_module(
         artifact.vm_module, rt_config)
     self.compilation_phase = CompilationPhase.LOADED

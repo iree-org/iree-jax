@@ -19,6 +19,7 @@ is mature. It uses the legacy XLA proto import path of IREE.
 
 import functools
 
+import iree.compiler
 import iree.compiler.tools.xla
 import iree.runtime
 
@@ -65,7 +66,7 @@ def aot(function, *args, **options):
   xla_comp = jax.xla_computation(function)(*args)
   hlo_proto = xla_comp.as_serialized_hlo_module_proto()
   return iree.compiler.tools.xla.compile_str(hlo_proto,
-                                             input_type="xla",
+                                             input_type=iree.compiler.InputType.XLA,
                                              **options)
 
 

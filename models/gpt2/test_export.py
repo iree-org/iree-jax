@@ -25,7 +25,7 @@ class ExportedModelTest(absltest.TestCase):
     self.tokenize = self.tokenizer.encode
 
     with open(FLAGS.binary_path, 'rb') as f:
-      config = iree_rt.Config("dylib")
+      config = iree_rt.Config("local-task")
       context = iree_rt.SystemContext(config=config)
       vm_module = iree_rt.VmModule.from_flatbuffer(f.read())
       context.add_vm_module(vm_module)

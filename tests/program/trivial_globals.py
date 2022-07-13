@@ -17,7 +17,6 @@
 from collections import namedtuple
 import logging
 
-import jax
 import jax.numpy as jnp
 
 from iree.jax import *

@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,23 +17,16 @@ This is intended to be the primary entry point for staging out a Jax program.
 It interfaces with the lower level exporter.
 """
 
-from enum import IntEnum
 import inspect
 import logging
 import re
 from typing import Any, Callable, Dict, Generator, Optional, Tuple, Union
 import weakref
-from jax._src.stages import Compiled
 
 import jax.core
 from jax.tree_util import tree_leaves, tree_map
 
-from iree.compiler import (
-    ir,
-    tools as iree_tools,
-)
-
-from iree import runtime as iree_rt
+from jaxlib.mlir import ir
 
 from . import builtins
 from . import jax_utils
@@ -46,51 +39,8 @@ __all__ = [
 ]
 
 ################################################################################
-# Runtime helpers. Most of this should go away when multi-device is supported
-################################################################################
-
-_config_cache: Dict[str, iree_rt.system_api.Config] = dict()
-
-
-def get_rt_config(driver_name: str):
-  driver = _config_cache.get(driver_name)
-  if driver is None:
-    driver = iree_rt.system_api.Config(driver_name)
-    _config_cache[driver_name] = driver
-  return driver
-
-
-################################################################################
 # Information data structures describing a Program under construction
 ################################################################################
-
-
-class CompilationPhase(IntEnum):
-  NONE = 0
-  IMPORTED = 1
-  COMPILED = 2
-  LOADED = 3
-
-
-class CompiledArtifact:
-  """Holds a compiled artifact and runtime instantiation.
-
-  Artifacts may be purely in-memory or they may be cached on disk and mmap'd
-  in.
-  """
-  __slots__ = [
-      "vm_binary",
-      "vm_module",
-  ]
-
-  def __init__(self, vm_binary):
-    self.vm_binary = vm_binary
-    self.vm_module = iree_rt.VmModule.from_flatbuffer(self.vm_binary)
-
-  @staticmethod
-  def from_memory_buffer(vm_binary_bytes) -> "CompiledArtifact":
-    return CompiledArtifact(vm_binary_bytes)
-
 
 _legal_parameter_kinds = (inspect.Parameter.POSITIONAL_ONLY,
                           inspect.Parameter.POSITIONAL_OR_KEYWORD)
@@ -292,10 +242,7 @@ class ProgramClassInfo:
 class ProgramInstanceInfo:
   """Info class associated with a Program instance."""
   __slots__ = [
-      "_loaded_runtime_module",
       "class_info",
-      "compilation_phase",
-      "_compiled_artifact",
       "export_module",
       "shadow_dict",
   ]
@@ -308,64 +255,6 @@ class ProgramInstanceInfo:
     # The shadow dict holds instance attributes. We stash them here and the
     # Program instance itself arbitrates access via getattr/setattr.
     self.shadow_dict = dict()
-    self.compilation_phase = CompilationPhase.NONE
-    self._compiled_artifact: Optional[CompiledArtifact] = None
-    self._loaded_runtime_module: Optional[iree_rt.system_api.BoundModule] = None
-
-  @property
-  def compiled_artifact(self) -> CompiledArtifact:
-    """Ensures that the compilation phase >= COMPILED, compiling as needed."""
-    if self.compilation_phase >= CompilationPhase.COMPILED:
-      return self._compiled_artifact
-    if self.compilation_phase != CompilationPhase.IMPORTED:
-      raise RuntimeError(f"Cannot compile program because it is not imported "
-                         f"(phase is {self.compilation_phase}")
-    logging.debug("Compiling program...")
-    # TODO: Obviously much more to do here.
-    # Perform verification and serialization explicitly so that we can
-    # better control the error messaging in the case of illegal programs
-    # being generated.
-    ir_module = self.export_module.module
-    if not ir_module.operation.verify():
-      raise RuntimeError(
-          f"Generated program failed to verify: "
-          f"{ir_module.operation.get_asm(print_generic_op_form=True)}")
-    ir_module_serialized = ir_module.operation.get_asm(binary=True,
-                                                       assume_verified=True)
-    # Compile via ireec.
-    vm_binary = iree_tools.compile_str(ir_module_serialized,
-                                       target_backends=["cpu"],
-                                       input_type="mhlo")
-    self._compiled_artifact = CompiledArtifact.from_memory_buffer(vm_binary)
-    self.compilation_phase = CompilationPhase.COMPILED
-    logging.debug("Compilation complete")
-    return self._compiled_artifact
-
-  @property
-  def runtime_module(self) -> iree_rt.system_api.BoundModule:
-    if self.compilation_phase >= CompilationPhase.LOADED:
-      assert self._loaded_runtime_module
-      return self._loaded_runtime_module
-    artifact = self.compiled_artifact
-    # TODO: Support flexible driver selection.
-    rt_config = get_rt_config("local-task")
-    self._loaded_runtime_module = iree_rt.system_api.load_vm_module(
-        artifact.vm_module, rt_config)
-    self.compilation_phase = CompilationPhase.LOADED
-    return self._loaded_runtime_module
-
-  def create_runtime_trampoline(self, exported_function_name):
-    """Creates a runtime trampoline function for the given exported function."""
-
-    def _raw_invoke(*args, **kwargs):
-      rt_module = self.runtime_module
-      rt_f = rt_module[exported_function_name]
-      return rt_f(*args, **kwargs)
-
-    # TODO: Should look up the FuncDef and get the in/out aval trees in order
-    # to tree-ify
-    return _raw_invoke
-
 
 ################################################################################
 # Use weak references to track info objects for program classes and instances
@@ -457,7 +346,6 @@ _STATIC_PROGRAM_ATTRIBUTES = (
     "_get_instance",
     "export_global",
     "get_class_info",
-    "get_compiled_artifact",
     "get_info",
     "get_mlir_module",
     "like",
@@ -482,11 +370,6 @@ class Program(metaclass=ProgramMeta):
     if isinstance(m, ProgramMeta):
       m = m()
     return m
-
-  @staticmethod
-  def get_compiled_artifact(m: ProgramClassOrInstance) -> CompiledArtifact:
-    info = Program.get_info(Program._get_instance(m))
-    return info.compiled_artifact
 
   @staticmethod
   def get_mlir_module(m: ProgramClassOrInstance) -> ir.Module:
@@ -569,19 +452,6 @@ class Program(metaclass=ProgramMeta):
         info.shadow_dict[key] = _uncallable_public_export
 
       export_function()
-
-    info.compilation_phase = CompilationPhase.IMPORTED
-
-    # Compile, if requested.
-    if not import_only:
-      _ = info.compiled_artifact
-
-    # Now that tracing is complete, rebind the export functions so that they
-    # redirect to the runtime, jitted program. By rebinding here, we avoid
-    # the possibility that such runtime-only functions can be invoked prior
-    # to completely importing.
-    for key, _ in info.class_info.export_functions:
-      info.shadow_dict[key] = info.create_runtime_trampoline(key)
 
     return self
 

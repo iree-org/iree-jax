@@ -21,7 +21,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-from iree.jax import kernel, like, Program
+from iree.jax import kernel, like, Program, Binary
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -60,9 +60,10 @@ class TrivialKernel(Program):
 m = TrivialKernel()
 print(Program.get_mlir_module(m))
 
-print("Initial params:", m.get_params())
-# TODO: Runtime should be able to directly take Jax arrays.
+b = Binary.compile_program(m, backends=["vmvx"])
+
+print("Initial params:", [a.to_host() for a in b.get_params()])
 update = np.asarray(jnp.ones_like(x))
-print("Run:", m.run(update))
-print("Run:", m.run(update + 2.0))
-print("Updated params:", m.get_params())
+print("Run:", b.run(update).to_host())
+print("Run:", b.run(update + 2.0).to_host())
+print("Updated params:", [a.to_host() for a in b.get_params()])

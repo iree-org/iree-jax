@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import logging
 from typing import Any, Dict, Optional, Sequence
 import weakref
 
-import numpy as np
 import jax.core
 from numpy import array
 
@@ -32,8 +31,7 @@ from . import ir_utils
 from . import jax_utils
 from . import tracing
 
-from iree.compiler import (
-    ir,)
+from jaxlib.mlir import ir
 
 from jax.tree_util import (tree_map, tree_flatten, tree_unflatten)
 

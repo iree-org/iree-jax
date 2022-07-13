@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,13 +13,12 @@
 # limitations under the License.
 
 from typing import Optional, Sequence, Tuple, Union
-from iree.compiler import (
-    ir,)
+from jaxlib.mlir import ir
 
-from iree.compiler.dialects import (
+from jaxlib.mlir.dialects import (
     func as func_d,
     chlo as chlo_d,
-    iree_input as iree_input_d,
+    ml_program as ml_program_d,
     mhlo as mhlo_d,
 )
 
@@ -28,7 +27,6 @@ def create_context(*, debug: bool = True) -> ir.Context:
   context = ir.Context()
   if debug:
     context.enable_multithreading(False)
-  iree_input_d.register_dialect(context)
   chlo_d.register_chlo_dialect(context)
   mhlo_d.register_mhlo_dialect(context)
   return context
@@ -41,13 +39,12 @@ def create_global(symbol_table: ir.SymbolTable,
                   mutable: bool = True,
                   visibility: str = "private",
                   initial_value: Optional[ir.Attribute] = None) -> str:
-  op = iree_input_d.GlobalOp(
+  op = ml_program_d.GlobalOp(
       sym_visibility=ir.StringAttr.get(visibility),
       sym_name=ir.StringAttr.get(symbol),
       type=ir.TypeAttr.get(ir_type),
       is_mutable=ir.UnitAttr.get() if mutable else None,
-      initializer=None,
-      initial_value=initial_value,
+      value=initial_value,
   )
   symbol_table.insert(op)
   # Must get the symbol name after insert, since it may be renamed.
@@ -68,12 +65,12 @@ def create_func_op(
 
 def create_global_load_op(symbol_name: str, ir_type: ir.Type) -> ir.Value:
   symbol_ref = ir.FlatSymbolRefAttr.get(symbol_name)
-  return iree_input_d.GlobalLoadOp(ir_type, symbol_ref).result
+  return ml_program_d.GlobalLoadOp(ir_type, symbol_ref).result
 
 
 def create_global_store_op(symbol_name: str, ir_value: ir.Value):
   symbol_ref = ir.FlatSymbolRefAttr.get(symbol_name)
-  iree_input_d.GlobalStoreOp(value=ir_value, global_=symbol_ref)
+  ml_program_d.GlobalStoreOp(value=ir_value, global_=symbol_ref)
 
 
 def get_function_type(symbol_table: ir.SymbolTable,

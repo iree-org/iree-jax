@@ -37,6 +37,7 @@ from jax.tree_util import (tree_map, tree_flatten, tree_unflatten,
 from iree.jax import (
   like,
   kernel,
+  Binary,
   Program,
 )
 
@@ -44,16 +45,18 @@ from iree.jax import (
 def main(args):
   output_dir = args[0]
   os.makedirs(output_dir, exist_ok=True)
-  compiled_module = build_model()
+  module = build_model()
 
   print("Saving mlir...")
   with open(os.path.join(output_dir, "mnist_train.mlir"), "wb") as f:
-    Program.get_mlir_module(compiled_module).operation.print(f, binary=True)
+    Program.get_mlir_module(module).operation.print(f, binary=True)
+
+  print("Compiling binary...")
+  binary = Binary.compile_program(module)
 
   print("Saving binary...")
   with open(os.path.join(output_dir, "mnist_train.vmfb"), "wb") as f:
-    f.write(Program.get_compiled_artifact(compiled_module).vm_binary)
-
+    f.write(binary.compiled_artifact)
 
 def build_model():
   init_random_params, predict = stax.serial(

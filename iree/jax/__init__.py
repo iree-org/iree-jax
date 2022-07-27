@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .binary import Binary
+from .iree import IREE
 from .program_api import Program
 
 # Re-export some Module static methods so people can use them unqualified if

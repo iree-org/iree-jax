@@ -37,7 +37,7 @@ from jax.tree_util import (tree_map, tree_flatten, tree_unflatten,
 from iree.jax import (
   like,
   kernel,
-  Binary,
+  IREE,
   Program,
 )
 
@@ -52,7 +52,7 @@ def main(args):
     Program.get_mlir_module(module).operation.print(f, binary=True)
 
   print("Compiling binary...")
-  binary = Binary.compile_program(module)
+  binary = IREE.compile_program(module)
 
   print("Saving binary...")
   with open(os.path.join(output_dir, "mnist_train.vmfb"), "wb") as f:

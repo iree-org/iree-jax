@@ -21,7 +21,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-from iree.jax import kernel, like, Program, Binary
+from iree.jax import kernel, like, Program
 
 logging.basicConfig(level=logging.DEBUG)
 

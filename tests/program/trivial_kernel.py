@@ -21,7 +21,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-from iree.jax import kernel, like, Program, Binary
+from iree.jax import kernel, like, Program, IREE
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -60,7 +60,7 @@ class TrivialKernel(Program):
 m = TrivialKernel()
 print(Program.get_mlir_module(m))
 
-b = Binary.compile_program(m, backends=["vmvx"])
+b = IREE.compile_program(m, backends=["vmvx"])
 
 print("Initial params:", [a.to_host() for a in b.get_params()])
 update = np.asarray(jnp.ones_like(x))

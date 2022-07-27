@@ -31,10 +31,10 @@ except ImportError:
   pass
 
 __slots__ = [
-    "Binary",
+    "IREE",
 ]
 
-class Binary:
+class IREE:
   def __init__(self, program: Program, backends : List[str], runtimes : str):
     self._program = program
     self._backends = backends
@@ -60,7 +60,7 @@ class Binary:
     except NameError:
         raise Exception("iree.runtime library is required for binary compilation")
 
-    binary = Binary(program, backends, runtime)
+    binary = IREE(program, backends, runtime)
     binary.compiled_artifact
     binary.runtime_module
     return binary

@@ -21,7 +21,7 @@ import numpy.random as random
 
 from jax._src import abstract_arrays
 
-from iree.jax import Program
+from iree.jax import IREE, Program
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -51,9 +51,11 @@ class TrivialKernel(Program):
 m = TrivialKernel()
 print(Program.get_mlir_module(m))
 
-# TODO: Runtime should be able to directly take Jax arrays.
-m.set(jnp.asarray(random.rand(7, 4), dtype=jnp.float32))
-print ("Get:", m.get())
+b = IREE.compile_program(m)
 
-m.matmul(jnp.asarray(random.rand(2, 7), dtype=jnp.float32))
-print ("Matmul:", m.get())
+# TODO: Runtime should be able to directly take Jax arrays.
+b.set(jnp.asarray(random.rand(7, 4), dtype=jnp.float32))
+print ("Get:", b.get())
+
+b.matmul(jnp.asarray(random.rand(2, 7), dtype=jnp.float32))
+print ("Matmul:", b.get())

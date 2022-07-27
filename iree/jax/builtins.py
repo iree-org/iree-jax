@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,8 +19,7 @@ from . import ir_utils
 from . import jax_utils
 from . import tracing
 
-from iree.compiler.dialects import (
-    func as func_d,)
+from jaxlib.mlir.dialects import func as func_d
 
 import jax
 import jax.core
@@ -49,7 +48,7 @@ class jit_kernel(tracing.CallableIntrinsic):
 
   def __init__(self, wrapped_f, *, wrap_with_jit: bool = True):
     self.wrapped_f = wrapped_f
-    self.jit_f = jax.jit(self.wrapped_f) if wrap_with_jit else self.wrapped_f
+    self.jit_f = jax.jit(self.wrapped_f, backend="iree") if wrap_with_jit else self.wrapped_f
 
   def __repr__(self):
     return f"<Exportable Pure Func: {self.wrapped_f}>"

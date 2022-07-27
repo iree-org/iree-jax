@@ -17,9 +17,7 @@ import numpy as np
 import unittest
 from iree.jax import program_api
 
-from iree.jax.program_api import (
-  Program
-)
+from iree.jax import Program
 
 import logging
 

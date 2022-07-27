@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,9 +17,8 @@ from jax.tree_util import tree_all, tree_flatten, tree_leaves, tree_reduce
 
 from . import array_types
 
-from iree.compiler import (
+from jaxlib.mlir import (
     ir,
-    passmanager,
 )
 
 import jax.core

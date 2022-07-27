@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,11 +16,9 @@ from contextlib import contextmanager
 import threading
 from typing import Any, List, Sequence
 
-from iree.compiler import (
+from jaxlib.mlir import (
     ir,)
-from iree.compiler.dialects import (
-    func as func_d,
-    iree_input as iree_input_d,
+from jaxlib.mlir.dialects import (
     func as func_d,
 )
 

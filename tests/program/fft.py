@@ -37,6 +37,6 @@ class FFT(Program):
     return jnp.fft.rfft(x, 512, axis=1)
 
 
-# CHECK: module @trivial_kernel
+# CHECK: module @f_f_t
 m = FFT()
 print(Program.get_mlir_module(m))

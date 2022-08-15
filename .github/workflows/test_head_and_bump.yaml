@@ -8,7 +8,7 @@ on:
 jobs:
   install_test:
     name: Install and Test
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
 
     steps:
       - uses: actions/checkout@7884fcad6b5d53d10323aee724dc68d8b9096a2e # v2
@@ -27,19 +27,22 @@ jobs:
         run: |
           python $GITHUB_WORKSPACE/build_tools/configure.py
           python3 -m pip install . -f https://github.com/google/iree/releases --force-reinstall .[xla,cpu,test]
-      
-      - name: Run Tests
-        run: |
-          build_tools/unittest.sh
+
+          #      - name: Run Tests
+          #        run: |
+          #          build_tools/unittest.sh
 
       - name: Update Pinned Versions
         run: |
           python build_tools/update_pinned.py
           cat version_info.json
-
-      - name: Push updated versions
-        run: |
           git config --local user.name "Bump Pinned Versions"
           git config --local user.email "iree-github-actions-bot@google.com"
           git commit -am "Update pinned versions"
-          git push origin update-versions
+
+      - name: Pushing changes
+        uses: ad-m/github-push-action@40bf560936a8022e68a3c00e7d2abefaf01305a6 # v0.6.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: update-pinned-versions
+          force: true

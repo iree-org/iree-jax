@@ -28,9 +28,9 @@ jobs:
           python $GITHUB_WORKSPACE/build_tools/configure.py
           python3 -m pip install . -f https://github.com/google/iree/releases --force-reinstall .[xla,cpu,test]
 
-          #      - name: Run Tests
-          #        run: |
-          #          build_tools/unittest.sh
+      - name: Run Tests
+        run: |
+          build_tools/unittest.sh
 
       - name: Update Pinned Versions
         run: |

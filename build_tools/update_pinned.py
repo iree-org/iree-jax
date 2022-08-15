@@ -44,6 +44,7 @@ def main():
   with open(os.path.join(project_root, "version_info.json"), 'w') as f:
       f.write(json.dumps(version_info, indent=2))
       f.write("\n")
+  print(pinned["iree-compiler"])
 
 if  __name__ == "__main__":
   main()

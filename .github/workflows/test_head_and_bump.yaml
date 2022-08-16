@@ -10,6 +10,9 @@ jobs:
     name: Install and Test
     runs-on: ubuntu-20.04
 
+    permissions:
+      contents: write
+
     steps:
       - uses: actions/checkout@7884fcad6b5d53d10323aee724dc68d8b9096a2e # v2
       - uses: actions/setup-python@7f80679172b057fc5e90d70d197929d454754a5a

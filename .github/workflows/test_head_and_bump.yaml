@@ -42,7 +42,5 @@ jobs:
 
       - name: Pushing changes
         run: |
-          git push --force ${{ github.repository }} update-pinned-versions
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          git push --force origin HEAD:update-pinned-versions
 

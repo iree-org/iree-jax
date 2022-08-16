@@ -42,12 +42,13 @@ class IREE:
     self._compiled_artifact = None
     self._runtime_module = None
     self._shadow_dict = dict()
+    self._instance = iree.runtime.VmInstance()
     pass
 
   @staticmethod
   def compile_program(
     program: Program,
-    backends : List[str] = ["cpu"] ,
+    backends : List[str] = ["llvm-cpu"] ,
     runtime : str = "local-task"):
 
     try:
@@ -81,7 +82,7 @@ class IREE:
   def runtime_module(self):
     if not self._runtime_module:
       rt_config = get_rt_config(self._runtime)
-      vm_module = iree.runtime.VmModule.from_flatbuffer(self.compiled_artifact)
+      vm_module = iree.runtime.VmModule.from_flatbuffer(self._instance, self.compiled_artifact)
       self._runtime_module = iree.runtime.system_api.load_vm_module(vm_module, rt_config)
 
     info = Program.get_info(Program._get_instance(self._program))

@@ -19,7 +19,7 @@ jobs:
 
       - name: Install deps
         run: |
-          python3 -m pip install Filecheck
+          python3 -m pip install Filecheck lit
 
       - name: Run installation
         run: |

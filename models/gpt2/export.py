@@ -91,7 +91,7 @@ def main(argv):
       FLAGS.ir_path,
       input_type="mhlo",
       output_file=FLAGS.binary_path,
-      target_backends=["cpu"])
+      target_backends=["llvm-cpu"])
 
 if __name__ == '__main__':
   absl.app.run(main)

@@ -27,7 +27,8 @@ class ExportedModelTest(absltest.TestCase):
     with open(FLAGS.binary_path, 'rb') as f:
       config = iree_rt.Config("local-task")
       context = iree_rt.SystemContext(config=config)
-      vm_module = iree_rt.VmModule.from_flatbuffer(f.read())
+      vm_module = iree_rt.VmModule.from_flatbuffer(
+          config.vm_instance, f.read())
       context.add_vm_module(vm_module)
       self.module = context.modules.gpt2_module
       self.encode = self.module.encode

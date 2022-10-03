@@ -45,13 +45,26 @@ class TrivialGlobals(Program):
 instance = TrivialGlobals()
 
 # CHECK-LABEL: module @trivial_globals
-# CHECK: ml_program.global private mutable @_params$0(dense<0.000000e+00> : tensor<3x4xf32>)
-# CHECK: ml_program.global private mutable @_params$1(dense<0.000000e+00> : tensor<3x4xf32>)
+# CHECK: ml_program.global
+# CHECK-SAME: _params$0
+# CHECK-SAME: dense<0.000000e+00> : tensor<3x4xf32>
+# CHECK: ml_program.global
+# CHECK-SAME: _params$1
+# CHECK-SAME: dense<0.000000e+00> : tensor<3x4xf32>
 # CHECK: func @get_params() -> (tensor<3x4xf32>, tensor<3x4xf32>)
-# CHECK:   %0 = ml_program.global_load @_params$0 : tensor<3x4xf32>
-# CHECK:   %1 = ml_program.global_load @_params$1 : tensor<3x4xf32>
+# CHECK:   %0 =
+# CHECK-SAME: ml_program.global_load
+# CHECK-SAME: _params$0
+# CHECK:   %1 =
+# CHECK-SAME: ml_program.global_load
+# CHECK-SAME: _params$1
 # CHECK:   return %0, %1
 # CHECK: func @set_params(%arg0: tensor<3x4xf32>, %arg1: tensor<3x4xf32>)
-# CHECK:   ml_program.global_store @_params$0 = %arg0 : tensor<3x4xf32>
-# CHECK:   ml_program.global_store @_params$1 = %arg1 : tensor<3x4xf32>
+# CHECK:   ml_program.global_store
+# CHECK-SAME-DAG: _params$0
+# CHECK-SAME-DAG: %arg0
+# CHECK:   ml_program.global_store
+# CHECK-SAME-DAG: _params$1
+# CHECK-SAME-DAG: %arg1
 print(Program.get_mlir_module(instance))
+

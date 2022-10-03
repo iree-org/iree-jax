@@ -27,6 +27,7 @@ def create_context(*, debug: bool = True) -> ir.Context:
   context = ir.Context()
   if debug:
     context.enable_multithreading(False)
+  context.allow_unregistered_dialects = True
   chlo_d.register_chlo_dialect(context)
   mhlo_d.register_mhlo_dialect(context)
   return context

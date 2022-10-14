@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import io
 from typing import Dict, List
 from .program_api import Program
 
@@ -70,11 +71,11 @@ class IREE:
   def compiled_artifact(self):
     if not self._compiled_artifact:
       ir_module = Program.get_mlir_module(self._program)
-      ir_module_serialized = ir_module.operation.get_asm(
-          binary=True, assume_verified=True)
-
+      output = io.BytesIO()
+      ir_module.operation.write_bytecode(file=output)
+      bytecode = output.getvalue()
       self._compiled_artifact = iree.compiler.tools.compile_str(
-          ir_module_serialized, target_backends=self._backends, input_type="mhlo")
+        bytecode, target_backends=self._backends, input_type="mhlo")
 
     return self._compiled_artifact
 

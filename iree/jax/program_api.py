@@ -18,6 +18,7 @@ It interfaces with the lower level exporter.
 """
 
 import inspect
+import io
 import logging
 import re
 from typing import Any, Callable, Dict, Generator, Optional, Tuple, Union
@@ -375,6 +376,10 @@ class Program(metaclass=ProgramMeta):
   def get_mlir_module(m: ProgramClassOrInstance) -> ir.Module:
     info = Program.get_info(Program._get_instance(m))
     return info.export_module.module
+
+  def save(m: ProgramClassOrInstance, o: io.BufferedIOBase):
+    ir_module = Program.get_mlir_module(m)
+    ir_module.operation.write_bytecode(file=o)
 
   @staticmethod
   def export_global(captured_value: Any,

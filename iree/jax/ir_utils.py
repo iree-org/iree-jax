@@ -20,6 +20,7 @@ from jaxlib.mlir.dialects import (
     chlo as chlo_d,
     ml_program as ml_program_d,
     mhlo as mhlo_d,
+    stablehlo as stablehlo_d,
 )
 
 
@@ -30,6 +31,7 @@ def create_context(*, debug: bool = True) -> ir.Context:
   context.allow_unregistered_dialects = True
   chlo_d.register_chlo_dialect(context)
   mhlo_d.register_mhlo_dialect(context)
+  stablehlo_d.register_dialect(context)
   return context
 
 

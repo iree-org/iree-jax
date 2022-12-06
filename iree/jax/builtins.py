@@ -59,7 +59,7 @@ class jit_kernel(tracing.CallableIntrinsic):
     # recursive calls to functions that may be traced happen as if outside.
     lowered = self.jit_f.lower(*abstract_args)
     result_tree_def = lowered.out_tree
-    lowered_asm = lowered.compiler_ir(dialect="mhlo")
+    lowered_asm = lowered.compiler_ir(dialect="stablehlo")
     imported_main_symbol_name = jax_utils.import_main_function(
         target_module=func_trace.module,
         target_symbol_table=func_trace.module_symbol_table,

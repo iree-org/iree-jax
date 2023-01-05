@@ -87,4 +87,6 @@ def create_array_attribute(array, ir_types: Sequence[ir.Type]) -> ir.Attribute:
   if len(ir_types) != 1:
     raise ValueError("Only single-typed arrays are supported")
   ranked_tensor_type = ir.RankedTensorType(ir_types[0])
+  if hasattr(array, "__array__"):
+    array = array.__array__()
   return ir.DenseElementsAttr.get(array, type=ranked_tensor_type.element_type)

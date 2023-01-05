@@ -3,7 +3,7 @@
     "iree-compiler": "20221121.334",
     "iree-runtime": "20221121.334",
     "iree-tools-xla": "20221121.334",
-    "jax": "0.3.25",
-    "jaxlib": "0.3.25"
+    "jax": "0.4.1",
+    "jaxlib": "0.4.1"
   }
 }

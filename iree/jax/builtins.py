@@ -99,7 +99,7 @@ class jit_kernel(tracing.CallableIntrinsic):
 
     # Now convert each IR result to an intrinsic.
     # TODO: Switch based on values not an array?
-    flat_results_aval = lowered._lowering.compile_args["out_avals"]
+    flat_results_aval = lowered._lowering.compile_args["global_out_avals"]
     flat_results_py = map(
         lambda aval, ir_value: array_types.IrValueArray(aval, ir_value),
         flat_results_aval, flat_results_ir)

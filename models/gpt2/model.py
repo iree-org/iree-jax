@@ -86,7 +86,8 @@ def init(L, E, F, Q, H, V, dtype):
 
 def init_kv(B, S, L, Q, H, dtype, abstract=False):
   if abstract:
-    return [abstract_arrays.ShapedArray((2, B, S, H, Q), dtype=dtype) for l in range(L)]
+    ret = [abstract_arrays.ShapedArray((2, B, S, H, Q), dtype=dtype) for l in range(L)]
+    return ret
   return [jnp.zeros((2, B, S, H, Q), dtype=dtype) for l in range(L)]
 
 

@@ -47,3 +47,11 @@ jobs:
         run: |
           git push --force origin HEAD:update-pinned-versions
 
+      - name: Posting to Discord
+        uses: sarisia/actions-status-discord@c193626e5ce172002b8161e116aa897de7ab5383 # v1.10.2
+        if: ${{ failure() }}
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK }}
+          description: "iree-jax head bump failed"
+          color: 0x0000ff
+          username: GitHub Actions

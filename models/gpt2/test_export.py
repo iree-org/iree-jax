@@ -13,22 +13,22 @@ import pathlib
 
 import config
 
-
 FLAGS = flags.FLAGS
 
+
 class ExportedModelTest(absltest.TestCase):
+
   def setUp(self):
     gpt2_dir = FLAGS.assets_path
-    self.tokenizer = GPT2Tokenizer(
-             vocab_file=path.join(gpt2_dir, 'vocab.json'),
-             merges_file=path.join(gpt2_dir, 'merges.txt'))
+    self.tokenizer = GPT2Tokenizer(vocab_file=path.join(gpt2_dir, 'vocab.json'),
+                                   merges_file=path.join(
+                                       gpt2_dir, 'merges.txt'))
     self.tokenize = self.tokenizer.encode
 
     with open(FLAGS.binary_path, 'rb') as f:
       config = iree_rt.Config("local-task")
       context = iree_rt.SystemContext(config=config)
-      vm_module = iree_rt.VmModule.from_flatbuffer(
-          config.vm_instance, f.read())
+      vm_module = iree_rt.VmModule.from_flatbuffer(config.vm_instance, f.read())
       context.add_vm_module(vm_module)
       self.module = context.modules.gpt2_module
       self.encode = self.module.encode
@@ -95,6 +95,7 @@ class ExportedModelTest(absltest.TestCase):
 
     self.assertEqual(y0, e0)
     self.assertEqual(y1, e1)
+
 
 if __name__ == '__main__':
   absltest.main()

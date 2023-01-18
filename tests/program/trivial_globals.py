@@ -67,4 +67,3 @@ instance = TrivialGlobals()
 # CHECK-SAME-DAG: _params$1
 # CHECK-SAME-DAG: %arg1
 print(Program.get_mlir_module(instance))
-

@@ -17,6 +17,7 @@ import os
 import subprocess
 import sys
 
+
 def main():
   project_root = os.path.dirname(os.path.dirname(__file__))
 
@@ -39,5 +40,6 @@ def main():
   _, err = proc.communicate()
   print(err)
 
+
 if __name__ == "__main__":
-    main()
+  main()

@@ -11,9 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Datasets used in examples."""
-
 
 import array
 import gzip
@@ -23,7 +21,6 @@ import struct
 import urllib.request
 
 import numpy as np
-
 
 _DATA = "/tmp/jax_example_data/"
 
@@ -64,8 +61,10 @@ def mnist_raw():
       return np.array(array.array("B", fh.read()),
                       dtype=np.uint8).reshape(num_data, rows, cols)
 
-  for filename in ["train-images-idx3-ubyte.gz", "train-labels-idx1-ubyte.gz",
-                   "t10k-images-idx3-ubyte.gz", "t10k-labels-idx1-ubyte.gz"]:
+  for filename in [
+      "train-images-idx3-ubyte.gz", "train-labels-idx1-ubyte.gz",
+      "t10k-images-idx3-ubyte.gz", "t10k-labels-idx1-ubyte.gz"
+  ]:
     _download(base_url + filename, filename)
 
   train_images = parse_images(path.join(_DATA, "train-images-idx3-ubyte.gz"))

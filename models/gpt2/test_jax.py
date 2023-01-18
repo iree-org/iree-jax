@@ -23,6 +23,7 @@ import model
 
 FLAGS = absl.flags.FLAGS
 
+
 def load_gpt2_tokenizer():
   builtins.open, tmp_open = open, builtins.open
   gpt2_dir = FLAGS.assets_path
@@ -31,6 +32,7 @@ def load_gpt2_tokenizer():
       merges_file=path.join(gpt2_dir, 'merges.txt'))
   builtins.open = tmp_open
   return tokenizer
+
 
 class GPT2RealWeightsTest(parameterized.TestCase):
 
@@ -41,8 +43,7 @@ class GPT2RealWeightsTest(parameterized.TestCase):
     self.params = model.load_gpt2_model(self.model_name, gpt2_dir)
     super().setUp()
 
-  @parameterized.parameters(*itertools.product(
-    ["cpu", "iree"]))
+  @parameterized.parameters(*itertools.product(["cpu", "iree"]))
   def test_batch_one(self, backend):
     dtype = jnp.float32
     S = 64
@@ -67,6 +68,7 @@ class GPT2RealWeightsTest(parameterized.TestCase):
     self.assertEqual(self.tokenizer.decode(int(x0[0, 0])), ' five')
     self.assertEqual(self.tokenizer.decode(int(x1[0, 0])), ' six')
     self.assertEqual(self.tokenizer.decode(int(x2[0, 0])), ' seven')
+
 
 if __name__ == '__main__':
   absltest.main()

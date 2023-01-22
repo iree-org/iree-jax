@@ -22,6 +22,8 @@ write comments and explanations.
 # Everything that is needed for basic use can be accessed from the Program
 # class. Some additional imports may be needed for more advanced cases.
 from iree.jax import Program
+import jax.numpy as jnp
+from collections import namedtuple
 
 # Host-side arrays and trees of arrays can be mirrored into an IREE Program.
 # All structure and any aliasing between trees is retained in the program.

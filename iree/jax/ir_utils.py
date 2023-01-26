@@ -43,11 +43,11 @@ def create_global(symbol_table: ir.SymbolTable,
                   visibility: str = "private",
                   initial_value: Optional[ir.Attribute] = None) -> str:
   op = ml_program_d.GlobalOp(
-      sym_visibility=ir.StringAttr.get(visibility),
-      sym_name=ir.StringAttr.get(symbol),
-      type=ir.TypeAttr.get(ir_type),
+      ir.StringAttr.get(symbol),
+      ir.TypeAttr.get(ir_type),
       is_mutable=ir.UnitAttr.get() if mutable else None,
       value=initial_value,
+      sym_visibility=ir.StringAttr.get(visibility),
   )
   symbol_table.insert(op)
   # Must get the symbol name after insert, since it may be renamed.

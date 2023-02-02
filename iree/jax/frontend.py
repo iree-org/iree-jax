@@ -65,9 +65,8 @@ def aot(function, *args, **options):
   """
   xla_comp = jax.xla_computation(function)(*args)
   hlo_proto = xla_comp.as_serialized_hlo_module_proto()
-  return iree.compiler.tools.xla.compile_str(hlo_proto,
-                                             input_type=iree.compiler.InputType.XLA,
-                                             **options)
+  return iree.compiler.tools.xla.compile_str(
+      hlo_proto, input_type=iree.compiler.InputType.XLA, **options)
 
 
 # A more JAX-native approach to jitting would be desireable here, however

@@ -27,6 +27,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 x = np.ones((1, 512), dtype=jnp.float32)
 
+
 class FFT(Program):
 
   def fft(self, x=like(x)):

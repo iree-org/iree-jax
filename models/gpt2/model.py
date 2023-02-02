@@ -40,12 +40,9 @@ def load_gpt2_model(name, gpt2_dir):
         w_i_bias = np.asarray(layer_root['mlp']['c_fc']['bias:0'])
         w_o = np.asarray(layer_root['mlp']['c_proj']['weight:0'])
         w_o_bias = np.asarray(layer_root['mlp']['c_proj']['bias:0'])
-        layer_params.append(((xnorm_scale, xnorm_bias),
-                             (wqkv, wqkv_bias),
-                             (wo, wo_bias),
-                             (ynorm_scale, ynorm_bias),
-                             (w_i, w_i_bias),
-                             (w_o, w_o_bias)))
+        layer_params.append(
+            ((xnorm_scale, xnorm_bias), (wqkv, wqkv_bias), (wo, wo_bias),
+             (ynorm_scale, ynorm_bias), (w_i, w_i_bias), (w_o, w_o_bias)))
       params.append(layer_params)
       fnorm_scale = np.asarray(root['ln_f']['gamma:0'])
       fnorm_bias = np.asarray(root['ln_f']['beta:0'])
@@ -67,12 +64,8 @@ def init_layer(E, F, Q, H, dtype):
   w_i_bias = jnp.ones((F,), dtype=dtype)
   w_o = jnp.ones((F, E), dtype=dtype)
   w_o_bias = jnp.ones((E,), dtype=dtype)
-  return ((xnorm_scale, xnorm_bias),
-          (wqkv, wqkv_bias),
-          (wo, wo_bias),
-          (ynorm_scale, ynorm_bias),
-          (w_i, w_i_bias),
-          (w_o, w_o_bias))
+  return ((xnorm_scale, xnorm_bias), (wqkv, wqkv_bias), (wo, wo_bias),
+          (ynorm_scale, ynorm_bias), (w_i, w_i_bias), (w_o, w_o_bias))
 
 
 def init(L, E, F, Q, H, V, dtype):
@@ -86,19 +79,18 @@ def init(L, E, F, Q, H, V, dtype):
 
 def init_kv(B, S, L, Q, H, dtype, abstract=False):
   if abstract:
-    ret = [abstract_arrays.ShapedArray((2, B, S, H, Q), dtype=dtype) for l in range(L)]
+    ret = [
+        abstract_arrays.ShapedArray((2, B, S, H, Q), dtype=dtype)
+        for l in range(L)
+    ]
     return ret
   return [jnp.zeros((2, B, S, H, Q), dtype=dtype) for l in range(L)]
 
 
 def fprop_layer(params, kv, x, t0, i, mask):
   """Run a single transformer layer."""
-  ((xnorm_scale, xnorm_bias),
-   (wqkv, wqkv_bias),
-   (wo, wo_bias),
-   (ynorm_scale, ynorm_bias),
-   (w_i, w_i_bias),
-   (w_o, w_o_bias)) = params
+  ((xnorm_scale, xnorm_bias), (wqkv, wqkv_bias), (wo, wo_bias),
+   (ynorm_scale, ynorm_bias), (w_i, w_i_bias), (w_o, w_o_bias)) = params
   # x = with_sharding_constraint(x, x_sharding)
   xnorm = jax.nn.normalize(x) * xnorm_scale + xnorm_bias
   qkv = jnp.einsum('bte,ihqe->ibthq', xnorm, wqkv) + wqkv_bias[:, None, None]
@@ -109,11 +101,11 @@ def fprop_layer(params, kv, x, t0, i, mask):
       new_kv = mask[None, :, :, None, None] * new_kv
       q = q * mask[:, :, None, None]
     kv = jax.lax.dynamic_update_slice(kv, new_kv, [0, i, 0, 0, 0])
-    k, v = jax.lax.dynamic_slice(kv, [0, i, 0, 0, 0], [2, x.shape[0], *kv.shape[2:]])
+    k, v = jax.lax.dynamic_slice(kv, [0, i, 0, 0, 0],
+                                 [2, x.shape[0], *kv.shape[2:]])
   elif t0 is not None:
     # "decoding" a single timestep
-    kv = jax.vmap(jax.lax.dynamic_update_slice,
-                  (1, 1, [None, 0, None, None]),
+    kv = jax.vmap(jax.lax.dynamic_update_slice, (1, 1, [None, 0, None, None]),
                   1)(kv, new_kv, [0, t0, 0, 0])
     k, v = kv
   else:
@@ -123,12 +115,11 @@ def fprop_layer(params, kv, x, t0, i, mask):
       jnp.sqrt(v.shape[-1]), dtype=x.dtype)
   # s refers to timestep attended to; t refers to timestep attending
   s = jnp.arange(outer.shape[2])[None, None, :]
-  t = (0 if t0 is None else t0[:, None, None]
-       ) + jnp.arange(outer.shape[1])[None, :, None]
+  t = (0 if t0 is None else t0[:, None, None]) + jnp.arange(
+      outer.shape[1])[None, :, None]
   if i is not None or t0 is not None:
     invalid = t < s
-    outer = outer - jnp.asarray(
-        jnp.inf, dtype=x.dtype) * invalid[:, :, :, None]
+    outer = outer - jnp.asarray(jnp.inf, dtype=x.dtype) * invalid[:, :, :, None]
   alpha = jax.nn.softmax(outer, 2)
   inner = jnp.einsum('btsh,bshq->bthq', alpha, v)
   y = jnp.einsum('bthq,hqe->bte', inner, wo) + wo_bias + x
@@ -141,21 +132,19 @@ def fprop_layer(params, kv, x, t0, i, mask):
 
 
 def embed(embedding, x):
-  return jax.vmap(jax.vmap(
-      lambda emb, inputs: emb[inputs],
-      (None, 0), 0), (None, 0), 0)(embedding, x)
+  return jax.vmap(jax.vmap(lambda emb, inputs: emb[inputs], (None, 0), 0),
+                  (None, 0), 0)(embedding, x)
 
 
 def fprop(params, kv, x, t0, i, mask):
   (wte, wpe, layer_params, (fnorm_scale, fnorm_bias)) = params
-  x = embed(wte, x) + embed(wpe, (0 if t0 is None else t0[:, None]
-                                  ) + jnp.arange(
-                                      x.shape[1], dtype=x.dtype)[None, :])
+  x = embed(wte, x) + embed(wpe, (0 if t0 is None else t0[:, None]) +
+                            jnp.arange(x.shape[1], dtype=x.dtype)[None, :])
   if mask is not None:
     x = jnp.where(mask[:, :, None], x, 0)
   for l in range(len(layer_params)):
-    kv[l], x = jax.named_call(fprop_layer, name=f'L_{l}')(
-        layer_params[l], kv[l], x, t0, i, mask)
+    kv[l], x = jax.named_call(fprop_layer, name=f'L_{l}')(layer_params[l],
+                                                          kv[l], x, t0, i, mask)
   x = jax.nn.normalize(x) * fnorm_scale + fnorm_bias
   return kv, x
 
@@ -172,12 +161,14 @@ def encode(params, kv, prompt, i, t):
   mask = jnp.where(iota < length, 1, 0)
 
   kv, y = fprop(params, kv, prompt, jnp.array([0], dtype=jnp.int32), i, mask)
-  y = y [jnp.arange(t.shape[0]), t-1, :][:, None, :]
+  y = y[jnp.arange(t.shape[0]), t - 1, :][:, None, :]
   return kv, greedy(y, params[0])
+
 
 @jax.jit
 def encode_batch(params, x):
   return fprop(params, [None] * len(params[2]), x, None, None, None)[1]
+
 
 @functools.partial(jax.jit)
 def decode(params, kv, x, t):
@@ -189,8 +180,8 @@ def decode(params, kv, x, t):
 
 # order is (L=length, E=embed, F=ffn, Q=qkv, H=heads, V=vocab)
 model_sizes = {
-    'gpt2': (12, 768, 4*768, 64, 768//64, 50257),
-    '355m': (24, 1024, 4*1024, 64, 1024//64, 51200),
-    'gpt2-xl': (48, 1600, 4*1600, 64, 1600//64, 50257),
-    '52b': (64, 8192, 4*8192, 64, 8192//64, 51200),
+    'gpt2': (12, 768, 4 * 768, 64, 768 // 64, 50257),
+    '355m': (24, 1024, 4 * 1024, 64, 1024 // 64, 51200),
+    'gpt2-xl': (48, 1600, 4 * 1600, 64, 1600 // 64, 50257),
+    '52b': (64, 8192, 4 * 8192, 64, 8192 // 64, 51200),
 }

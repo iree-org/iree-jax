@@ -35,10 +35,10 @@ from jax.tree_util import (tree_map, tree_flatten, tree_unflatten,
                            register_pytree_node)
 
 from iree.jax import (
-  like,
-  kernel,
-  IREE,
-  Program,
+    like,
+    kernel,
+    IREE,
+    Program,
 )
 
 
@@ -57,6 +57,7 @@ def main(args):
   print("Saving binary...")
   with open(os.path.join(output_dir, "mnist_train.vmfb"), "wb") as f:
     f.write(binary.compiled_artifact)
+
 
 def build_model():
   init_random_params, predict = stax.serial(

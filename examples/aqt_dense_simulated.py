@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Test compiling and executing a basic AQT MatMul with IREE."""
 
 from collections import namedtuple
@@ -28,17 +27,18 @@ activation_example = jnp.arange(30, dtype=jnp.float32).reshape(5, 6) / 10.4
 
 Params = namedtuple("Params", "weights,bias,activation_scale")
 params = [
-  Params(
-    weights=jnp.arange(18, dtype=jnp.float32).reshape(6, 3) * 0.001,
-    bias=jnp.arange(3, dtype=jnp.float32) * 10.0,
-    activation_scale=jnp.array(5.0),
-  ),
-  Params(
-    weights=jnp.arange(27, dtype=jnp.float32).reshape(3, 9) * 0.01,
-    bias=jnp.arange(9, dtype=jnp.float32) * 3.0,
-    activation_scale=jnp.array(5.0),
-  ),
+    Params(
+        weights=jnp.arange(18, dtype=jnp.float32).reshape(6, 3) * 0.001,
+        bias=jnp.arange(3, dtype=jnp.float32) * 10.0,
+        activation_scale=jnp.array(5.0),
+    ),
+    Params(
+        weights=jnp.arange(27, dtype=jnp.float32).reshape(3, 9) * 0.01,
+        bias=jnp.arange(9, dtype=jnp.float32) * 3.0,
+        activation_scale=jnp.array(5.0),
+    ),
 ]
+
 
 def dense(params, activation):
   precision = 8
@@ -56,6 +56,7 @@ def dense(params, activation):
   scaled_result = jax.lax.dot(activation_clipped, weight_rounded)
   matmul_result = scaled_result / (params.activation_scale * weight_scale)
   return matmul_result + params.bias[jnp.newaxis, :]
+
 
 class AqtDenseModule(Program):
 

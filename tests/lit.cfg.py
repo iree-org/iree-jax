@@ -48,23 +48,24 @@ config.substitutions.extend([
 # Find a suitable filecheck.
 filecheck_exe = None
 if filecheck_exe is None:
-    filecheck_exe = shutil.which("FileCheck")
-    if filecheck_exe:
-        print(f"Using LLVM FileCheck: {filecheck_exe}")
+  filecheck_exe = shutil.which("FileCheck")
+  if filecheck_exe:
+    print(f"Using LLVM FileCheck: {filecheck_exe}")
 if filecheck_exe is None:
-    filecheck_exe = shutil.which("filecheck")
-    if filecheck_exe:
-        print(f"Using pure python filecheck: {filecheck_exe}")
+  filecheck_exe = shutil.which("filecheck")
+  if filecheck_exe:
+    print(f"Using pure python filecheck: {filecheck_exe}")
 
 if filecheck_exe is not None:
-    config.substitutions.extend([
-        ('FileCheck', filecheck_exe),
-    ])
+  config.substitutions.extend([
+      ('FileCheck', filecheck_exe),
+  ])
 else:
-    print("FileCheck not found "
-          "(install pure python version with 'pip install filecheck')")
+  print("FileCheck not found "
+        "(install pure python version with 'pip install filecheck')")
 
 project_root = os.path.dirname(os.path.dirname(__file__))
-lit.llvm.llvm_config.with_environment(
-    "PYTHONPATH", project_root, append_path=True)
+lit.llvm.llvm_config.with_environment("PYTHONPATH",
+                                      project_root,
+                                      append_path=True)
 config.environment["FILECHECK_OPTS"] = "--dump-input=fail"

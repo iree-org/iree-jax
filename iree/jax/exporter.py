@@ -143,7 +143,8 @@ class ExportModule:
       # We fork between trackable things and static constants. Currently this
       # is just array vs not, but this should match Jax's heuristic.
       # TODO: Make sure this is the right way to detect array.
-      if isinstance(concrete_leaf, jax.core.ShapedArray) or hasattr(concrete_leaf, "__array__"):
+      if isinstance(concrete_leaf, jax.core.ShapedArray) or hasattr(
+          concrete_leaf, "__array__"):
         leaf_symbol = f"{symbol_name}${tracked_leaf_count}"
         logger.debug("def_global_tree: array %s=%r:%r", leaf_symbol,
                      concrete_leaf.shape, concrete_leaf.dtype)

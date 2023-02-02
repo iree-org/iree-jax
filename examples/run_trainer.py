@@ -73,6 +73,7 @@ def get_examples():
   num_train = train_images.shape[0]
   num_complete_batches, leftover = divmod(num_train, batch_size)
   print(f"Number of batches in dataset: {num_complete_batches}")
+
   def data_stream():
     rng = npr.RandomState(0)
     while True:

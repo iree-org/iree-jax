@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Test compiling and executing a basic AQT MatMul with IREE."""
 
 from collections import namedtuple
@@ -28,9 +27,10 @@ activation_example = jnp.arange(30, dtype=jnp.float32).reshape(5, 6) / 10.4
 
 Params = namedtuple("Params", "weights,activation_scale")
 params = Params(
-  weights=jnp.arange(18, dtype=jnp.float32).reshape(6, 3) * 500.3,
-  activation_scale=jnp.array(5.0),
+    weights=jnp.arange(18, dtype=jnp.float32).reshape(6, 3) * 500.3,
+    activation_scale=jnp.array(5.0),
 )
+
 
 class AqtMatmulModule(Program):
 
@@ -52,8 +52,9 @@ class AqtMatmulModule(Program):
     weight_rounded = jnp.floor(weight_scaled + jnp.array(0.5))
     weight_as_int = weight_rounded.astype(jnp.int8)
 
-    scaled_result = jax.lax.dot(
-        activation_as_int, weight_as_int, preferred_element_type=jnp.int32)
+    scaled_result = jax.lax.dot(activation_as_int,
+                                weight_as_int,
+                                preferred_element_type=jnp.int32)
     return scaled_result / (params.activation_scale * weight_scale)
 
   def compute_native(mdl, activation=like(activation_example)):

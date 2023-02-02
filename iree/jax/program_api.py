@@ -257,6 +257,7 @@ class ProgramInstanceInfo:
     # Program instance itself arbitrates access via getattr/setattr.
     self.shadow_dict = dict()
 
+
 ################################################################################
 # Use weak references to track info objects for program classes and instances
 ################################################################################

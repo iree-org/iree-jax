@@ -19,8 +19,7 @@ from typing import Any, List, Sequence
 from jaxlib.mlir import (
     ir,)
 from jaxlib.mlir.dialects import (
-    func as func_d,
-)
+    func as func_d,)
 
 import jax.core
 from jax.tree_util import (tree_map, tree_flatten, tree_unflatten)

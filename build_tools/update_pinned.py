@@ -17,12 +17,13 @@ import os
 import subprocess
 import sys
 from subprocess import check_output
-
 '''Update the version_info.json with the currently installed libraries.'''
+
+
 def main():
   reqs = subprocess.check_output([sys.executable, '-m', 'pip', 'freeze'])
   reqs = [c.split("==") for c in reqs.decode('ascii').split('\n') if "==" in c]
-  reqs = {a : b for a, b in reqs }
+  reqs = {a: b for a, b in reqs}
 
   # Load version_info.json.
   project_root = os.path.dirname(os.path.dirname(__file__))
@@ -36,15 +37,18 @@ def main():
 
   pinned = version_info["pinned-versions"]
   for pinned_lib in pinned:
-      if pinned_lib in reqs:
-        pinned[pinned_lib] = reqs[pinned_lib]
+    if pinned_lib in reqs:
+      pinned[pinned_lib] = reqs[pinned_lib]
 
-  version_info = {a : version_info[a] for a in version_info if a == "pinned-versions"}
+  version_info = {
+      a: version_info[a] for a in version_info if a == "pinned-versions"
+  }
 
   with open(os.path.join(project_root, "version_info.json"), 'w') as f:
-      f.write(json.dumps(version_info, indent=2))
-      f.write("\n")
+    f.write(json.dumps(version_info, indent=2))
+    f.write("\n")
   print(pinned["iree-compiler"])
 
-if  __name__ == "__main__":
+
+if __name__ == "__main__":
   main()

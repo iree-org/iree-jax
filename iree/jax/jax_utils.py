@@ -18,8 +18,7 @@ from jax.tree_util import tree_all, tree_flatten, tree_leaves, tree_reduce
 from . import array_types
 
 from jaxlib.mlir import (
-    ir,
-)
+    ir,)
 
 import jax.core
 import jax.interpreters.mlir
@@ -64,7 +63,8 @@ def abstractify(x) -> jax.core.AbstractValue:
 
 def unwrap_global_array(x) -> Optional[array_types.ExportedGlobalArray]:
   # TODO: Ugh. Ugh.
-  if isinstance(x, jax.core.ConcreteArray) or isinstance(x, jax.core.ShapedArray):
+  if isinstance(x, jax.core.ConcreteArray) or isinstance(
+      x, jax.core.ShapedArray):
     x = x.val
   if not isinstance(x, array_types.ExportedGlobalArray):
     return None

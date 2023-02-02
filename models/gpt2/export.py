@@ -18,6 +18,7 @@ from os import path
 
 FLAGS = absl.flags.FLAGS
 
+
 # Configuration details.
 # B - batch size
 # K - encoder sequence length
@@ -26,7 +27,7 @@ FLAGS = absl.flags.FLAGS
 def CreateGpt2Model(name, B, K, S, T):
   L, _, _, Q, H, _ = model.model_sizes[name]
 
-  prompt_type = ShapedArray((B,K), dtype=jnp.int32)
+  prompt_type = ShapedArray((B, K), dtype=jnp.int32)
   t_type = ShapedArray((B,), dtype=jnp.int32)
   x_type = ShapedArray((B, T), dtype=jnp.int32)
   kv_type = model.init_kv(B, S, L, Q, H, dtype=jnp.float32, abstract=True)
@@ -75,23 +76,24 @@ def CreateGpt2Model(name, B, K, S, T):
 
   return Gpt2Module
 
+
 def main(argv):
   cfg = config.get_config()
-  B = cfg.B # Batch size
-  K = cfg.K # Input sequence length
+  B = cfg.B  # Batch size
+  K = cfg.K  # Input sequence length
   S = cfg.S
-  T = cfg.T # Batched decode
+  T = cfg.T  # Batched decode
 
   module = CreateGpt2Model("gpt2", B, K, S, T)
 
   with open(FLAGS.ir_path, 'w') as f:
     f.write(str(Program.get_mlir_module(module)))
 
-  compiler.compile_file(
-      FLAGS.ir_path,
-      input_type="mhlo",
-      output_file=FLAGS.binary_path,
-      target_backends=["llvm-cpu"])
+  compiler.compile_file(FLAGS.ir_path,
+                        input_type="mhlo",
+                        output_file=FLAGS.binary_path,
+                        target_backends=["llvm-cpu"])
+
 
 if __name__ == '__main__':
   absl.app.run(main)

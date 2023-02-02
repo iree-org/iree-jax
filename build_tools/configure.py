@@ -20,15 +20,18 @@ import sys
 import time
 
 parser = argparse.ArgumentParser(description='Determine setup options.')
-parser.add_argument('--use-pinned', default=False, action=argparse.BooleanOptionalAction)
+parser.add_argument('--use-pinned',
+                    default=False,
+                    action=argparse.BooleanOptionalAction)
 parser.add_argument('--add-version')
-
 '''Sets values in version_info.json
 
 Sets values related to the libraries version numbers, the pinned versions, and
 whether the pinned versions should be exact or a lower bound. This is used for
 configuring on demand for bumping or validating pinned versions.
 '''
+
+
 def main():
   project_root = os.path.dirname(os.path.dirname(__file__))
 
@@ -52,9 +55,9 @@ def main():
   print(json.dumps(version_info, indent=2))
 
   with open(os.path.join(project_root, "version_info.json"), 'w') as f:
-      f.write(json.dumps(version_info, indent=2))
-      f.write("\n")
+    f.write(json.dumps(version_info, indent=2))
+    f.write("\n")
+
 
 if __name__ == "__main__":
   main()
-

@@ -35,6 +35,7 @@ except FileNotFoundError:
 
 PACKAGE_VERSION = version_info.get("package-version") or "0.1dev1"
 
+
 def get_pinned_package(name):
   pinned_versions = version_info.get("pinned-versions")
   use_pinned = version_info.get("use-pinned")
@@ -43,6 +44,7 @@ def get_pinned_package(name):
   else:
     restriction = "==" if use_pinned else ">="
     return f"{name}{restriction}{pinned_versions[name]}"
+
 
 setup(
     name=f"iree-jax",
@@ -59,11 +61,7 @@ setup(
         get_pinned_package("jaxlib"),
     ],
     extras_require={
-      "xla": [
-        get_pinned_package("iree-tools-xla"),
-      ],
-      "test": [
-        "lit",
-      ]
+        "xla": [get_pinned_package("iree-tools-xla"),],
+        "test": ["lit",]
     },
 )

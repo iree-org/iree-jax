@@ -25,6 +25,7 @@ from jaxlib.mlir.dialects import (
 import jax.core
 from jax.tree_util import (tree_map, tree_flatten, tree_unflatten)
 from numpy import number
+from collections.abc import Mapping, Iterable
 
 _thread_state = threading.local()
 
@@ -114,13 +115,6 @@ class FunctionIrTrace(IrTrace):
 
   def materialize_py_values(self, py_value: Any) -> Sequence[ir.Value]:
     # TODO: IR'izing values could probably use a dedicated helper.
-    if isinstance(py_value, (list, tuple, dict)):
-      # Treat it as a tree.
-      py_flat, tree_def = tree_flatten(py_value)
-      ir_flat = []
-      for py_flat_item in py_flat:
-        ir_flat.extend(self.materialize_py_values(py_flat_item))
-      return ir_flat
 
     # Unwrap ConcreteArray.
     if isinstance(py_value, jax.core.ConcreteArray):
@@ -130,6 +124,21 @@ class FunctionIrTrace(IrTrace):
         return py_value.resolve_ir_values(self)
     if isinstance(py_value, number):
       return py_value
+
+    if isinstance(py_value, Mapping):
+      if not isinstance(py_value, dict):
+        py_value = dict(py_value)
+    elif isinstance(py_value, Iterable):
+      if not isinstance(py_value, (list, tuple)):
+        py_value = list(py_value)
+
+    if isinstance(py_value, (list, tuple, dict)):
+      # Treat it as a tree.
+      py_flat, tree_def = tree_flatten(py_value)
+      ir_flat = []
+      for py_flat_item in py_flat:
+        ir_flat.extend(self.materialize_py_values(py_flat_item))
+      return ir_flat
 
     raise TypeError(
         f"While tracing, encountered an unsupported value: {py_value}")

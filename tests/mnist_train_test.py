@@ -31,8 +31,10 @@ from iree.jax import (
 )
 from tempfile import TemporaryDirectory
 import numpy as np
-from typing import Any, Callable
+from typing import Any, Callable, TypeVar, List
 import unittest
+
+Tensor = TypeVar('Tensor')
 
 
 def get_example_batch():
@@ -185,30 +187,36 @@ def build_jax_module():
   return JaxMnistModule()
 
 
-def assert_array_almost_equal(a, b):
-  np_a = np.asarray(a)
-  np_b = np.asarray(b)
-  # Test for absolute error.
-  np.testing.assert_array_almost_equal(np_a, np_b, decimal=5)
-  # Test for relative error while ignoring false positives from
-  # catastrophic cancellation.
-  np.testing.assert_array_almost_equal_nulp(np.abs(np_a - np_b) + 10**-7,
-                                            np.zeros_like(np_a),
-                                            nulp=10**8)
+DEFAULT_REL_TOLERANCE = 1e-5
+DEFAULT_ABS_TOLERANCE = 1e-5
 
 
-def assert_array_list_equal(
-    a,
-    b,
-    array_compare_fn: Callable[[Any, Any],
-                               None] = np.testing.assert_array_equal):
+def allclose(a: Tensor,
+             b: Tensor,
+             rtol=DEFAULT_REL_TOLERANCE,
+             atol=DEFAULT_ABS_TOLERANCE):
+  return np.allclose(np.asarray(a), np.asarray(b), rtol, atol)
+
+
+def array_equal(a: Tensor, b: Tensor):
+  return np.array_equal(np.asarray(a), np.asarray(b))
+
+
+def assert_array_list_compare(array_compare_fn, a: Tensor, b: Tensor):
   assert (len(a) == len(b))
   for x, y in zip(a, b):
-    array_compare_fn(x, y)
+    np.testing.assert_array_compare(array_compare_fn, x, y)
 
 
-def assert_array_list_almost_equal(a, b):
-  assert_array_list_equal(a, b, assert_array_almost_equal)
+def assert_array_list_equal(a: List[Tensor], b: List[Tensor]):
+  assert_array_list_compare(array_equal, a, b)
+
+
+def assert_array_list_allclose(a: List[Tensor],
+                               b: List[Tensor],
+                               rtol=DEFAULT_REL_TOLERANCE,
+                               atol=DEFAULT_ABS_TOLERANCE):
+  assert_array_list_compare(lambda x, y: allclose(x, y, rtol, atol), a, b)
 
 
 def train_mnist_test(backend: str, runtime: str):
@@ -230,21 +238,22 @@ def train_mnist_test(backend: str, runtime: str):
     # Check one training step.
     iree_module.update(*example_batch)
     jax_module.update(example_batch)
-    assert_array_list_almost_equal(iree_module.get_opt_state(),
-                                   tree_flatten(jax_module.get_opt_state())[0])
+    assert_array_list_allclose(iree_module.get_opt_state(),
+                               tree_flatten(jax_module.get_opt_state())[0])
 
     # Check inference.
     iree_module.set_opt_state(*tree_flatten(jax_module.get_opt_state())[0])
     prediction_iree = iree_module.forward(example_batch[0])
     prediction_jax = jax_module.forward(example_batch[0])
-    assert_array_almost_equal(prediction_iree, prediction_jax)
+    np.testing.assert_allclose(prediction_iree, prediction_jax,
+                               DEFAULT_REL_TOLERANCE, DEFAULT_ABS_TOLERANCE)
 
     # Check intialization.
     rng = random.PRNGKey(6789)
     iree_module.initialize(np.asarray(rng, dtype=np.int32))
     jax_module.initialize(rng)
-    assert_array_list_almost_equal(iree_module.get_opt_state(),
-                                   tree_flatten(jax_module.get_opt_state())[0])
+    assert_array_list_allclose(iree_module.get_opt_state(),
+                               tree_flatten(jax_module.get_opt_state())[0])
 
 
 class MnistTrainTest(unittest.TestCase):

@@ -63,7 +63,7 @@ def aot(function, *args, **options):
     args: The inputs to trace and compile the function for.
     **kwargs: Keyword args corresponding to xla.ImportOptions or CompilerOptions
   """
-  xla_comp = jax.xla_computation(function)(*args)
+  xla_comp = jax.jit(function).lower(*args).compiler_ir(dialect="hlo")
   hlo_proto = xla_comp.as_serialized_hlo_module_proto()
   return iree.compiler.tools.xla.compile_str(hlo_proto,
                                              input_type=iree.compiler.InputType.XLA,

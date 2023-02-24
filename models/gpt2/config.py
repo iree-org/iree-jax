@@ -18,4 +18,4 @@ flags.DEFINE_string('assets_path', assets_dir, 'Path for assets dir')
 # T - decode step size
 def get_config():
     config = collections.namedtuple('Config', ['B', 'K', 'S', 'T'])
-    return config(4, 8, 64, 1)
+    return config(1, 8, 64, 1)

@@ -34,11 +34,11 @@ def generate_text(params, ids, n_new_words):
     for _ in range(min(n_new_words, S - nids)):
         kv, x = model.decode(params, kv, x, t)
         t = t + 1
-        if x.item() == 50256:
+        if x.item() == 50256: # 50256 is <|endoftext|> in GPT-2's vocab.json
             break
         else:
             ret.append(x.item())
-            if x.item() == 13:
+            if x.item() == 13: # 13 is period in GPT-2's vocab.json
                 break
     return ret
 

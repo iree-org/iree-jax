@@ -88,8 +88,6 @@ def CreateGpt2Model(name, B, K, S, T):
 
     def finetune(self, text=text_type, target=text_type, t=t_type):
       new_params, new_opt_state = self._train_step(self._params, self._opt_state, self._kv_state, text, target, t)
-      new_params, new_opt_state = self._train_step(self._params, self._opt_state, self._kv_state, text, target, t)
-      new_params, new_opt_state = self._train_step(self._params, self._opt_state, self._kv_state, text, target, t)
       store_global(self._params, new_params)
       store_global(self._opt_state, new_opt_state)
 

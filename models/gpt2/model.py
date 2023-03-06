@@ -6,6 +6,7 @@ import jax
 import jax.numpy as jnp
 from jax._src import abstract_arrays
 import numpy as np
+import optax
 
 
 # pylint: disable=invalid-name
@@ -185,6 +186,17 @@ def decode(params, kv, x, t):
   assert T == 1
   kv, y = fprop(params, kv, x, t, None, None)
   return kv, greedy(y, params[0])
+
+def loss(params, kv, text, target, t):
+    iota = jnp.arange(text.shape[1])[None, :]
+    length = t[:, None]
+    mask = jnp.where(iota < length, 1, 0)
+
+    kv, y = fprop(params, kv, text, jnp.array([0], dtype=jnp.int32), 0, mask)
+    wte = params[0]
+    logits = jnp.einsum("bte,ve->btv", y, wte)
+    loss = optax.softmax_cross_entropy_with_integer_labels(logits, target)
+    return jnp.mean(loss * mask)
 
 
 # order is (L=length, E=embed, F=ffn, Q=qkv, H=heads, V=vocab)

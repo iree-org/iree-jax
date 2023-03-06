@@ -5,3 +5,4 @@ __pycache__
 build/
 dist/
 models/gpt2/assets
+*~

@@ -15,9 +15,9 @@
 
 import numpy as np
 import unittest
+from flax.core import FrozenDict
 from iree.jax import program_api
-
-from iree.jax import Program
+from iree.jax import (like, Program, kernel)
 
 import logging
 
@@ -129,6 +129,34 @@ class ProgramApiTest(unittest.TestCase):
 
       class Error(Program):
         foobar = object()
+
+  def test_value_tracing_with_flax_frozen_dict(self):
+    x = 0
+
+    class IreeJaxProgram(Program):
+
+      def f(self, x=like(x)):
+        return self._f(x)
+
+      @kernel
+      def _f(x):
+        return FrozenDict({"x": x})
+
+    IreeJaxProgram()
+
+  def test_value_tracing_with_list(self):
+    x = 0
+
+    class IreeJaxProgram(Program):
+
+      def f(self, x=like(x)):
+        return self._f(x)
+
+      @kernel
+      def _f(x):
+        return [x]
+
+    IreeJaxProgram()
 
 
 if __name__ == '__main__':

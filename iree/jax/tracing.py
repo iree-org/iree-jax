@@ -125,6 +125,7 @@ class FunctionIrTrace(IrTrace):
     if isinstance(py_value, number):
       return py_value
 
+    # Handle custom dict types like 'flax.core.FrozenDict'.
     if isinstance(py_value, Mapping):
       if not isinstance(py_value, dict):
         py_value = dict(py_value)

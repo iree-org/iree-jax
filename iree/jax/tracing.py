@@ -25,7 +25,7 @@ from jaxlib.mlir.dialects import (
 import jax.core
 from jax.tree_util import (tree_map, tree_flatten, tree_unflatten)
 from numpy import number
-from collections.abc import Mapping, Iterable
+from collections.abc import Mapping
 
 _thread_state = threading.local()
 
@@ -129,9 +129,6 @@ class FunctionIrTrace(IrTrace):
     if isinstance(py_value, Mapping):
       if not isinstance(py_value, dict):
         py_value = dict(py_value)
-    elif isinstance(py_value, Iterable):
-      if not isinstance(py_value, (list, tuple)):
-        py_value = list(py_value)
 
     if isinstance(py_value, (list, tuple, dict)):
       # Treat it as a tree.

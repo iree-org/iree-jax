@@ -20,7 +20,10 @@ S = cfg.S  # completed text length
 T = cfg.T  # Batched decode
 L, _, _, Q, H, _ = model.model_sizes["gpt2"]
 
-adam = optax.adamw(learning_rate=3e-4)
+# adam = optax.adamw(learning_rate=3e-4) # Too big memory footprint
+# adam = optax.sgd(learning_rate=3e-4) # Cannot converge into the training sentence
+# adam = optax.optimistic_gradient_descent(learning_rate=3e-4) # Same as sgd.
+adam = optax.adafactor(learning_rate=3e-4)
 
 @jax.jit
 def _train_step(params, opt_state, kv, text, target, t):

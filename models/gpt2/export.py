@@ -40,7 +40,7 @@ def CreateGpt2Model(name, B, K, S, T):
   pad = 32 - (params[0].shape[0] % 32)
   params[0] = np.pad(params[0], ((0, pad), (0, 0)), constant_values=[-1.])
 
-  adam = optax.adamw(learning_rate=3e-4)
+  adam = optax.adafactor(learning_rate=3e-4)
   opt_state = adam.init(params)
 
   class Gpt2Module(Program):

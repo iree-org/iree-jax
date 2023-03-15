@@ -20,16 +20,29 @@ S = cfg.S  # completed text length
 T = cfg.T  # Batched decode
 L, _, _, Q, H, _ = model.model_sizes["gpt2"]
 
-# adam = optax.adamw(learning_rate=3e-4) # Too big memory footprint
-# adam = optax.sgd(learning_rate=3e-4) # Cannot converge into the training sentence
-# adam = optax.optimistic_gradient_descent(learning_rate=3e-4) # Same as sgd.
-adam = optax.adafactor(learning_rate=3e-4)
+# We can fine-tune GPT-2 on phones with the help of IREE. Both iOS and
+# Android phones have a limited amount of RAM, which is shared by the
+# CPU and GPU cores. Here, we try out different optimizers to find the
+# right balance between a small amount of memory used and
+# convergence. The memory used by the optimizer state of optax.sgd and
+# optax.optimistic gradient descent is close to zero. However, they do
+# not converge well. The state of AdamW takes up twice as much space
+# as parameters. But the fine-tuning can be done in one or two
+# steps. In the middle is Adafactor. Its state takes up as much space
+# as its parameters, and it converges no much slower than AdamW.
+#
+# Please uncomment one of the lines below to choose an optimizer.
+#
+# optmr = optax.adamw(learning_rate=3e-4) # Too big memory footprint
+# optmr = optax.sgd(learning_rate=3e-4) # Cannot converge into the training sentence
+# optmr = optax.optimistic_gradient_descent(learning_rate=3e-4) # Same as sgd.
+optmr = optax.adafactor(learning_rate=3e-4)
 
 @jax.jit
 def _train_step(params, opt_state, kv, text, target, t):
     grads = jax.grad(model.loss)(params, kv, text, target, t)
     assert len(grads) == len(params)
-    updates, new_opt_state = adam.update(grads, opt_state, params)
+    updates, new_opt_state = optmr.update(grads, opt_state, params)
     new_params = optax.apply_updates(params, updates)
     return new_params, new_opt_state
 
@@ -51,7 +64,7 @@ def finetune(params, niters):
     kv = model.init_kv(1, S, L, Q, H, dtype=jnp.float32)
     kv = [jnp.tile(k, (1, text.shape[0], 1, 1, 1)) for k in kv]
 
-    opt_state = adam.init(params)
+    opt_state = optmr.init(params)
     for iter in range(niters):
         params, opt_state = _train_step(params, opt_state, kv, text, target, t)
         completion = tknzr.decode(

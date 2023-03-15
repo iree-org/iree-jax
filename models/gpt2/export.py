@@ -40,8 +40,8 @@ def CreateGpt2Model(name, B, K, S, T):
   pad = 32 - (params[0].shape[0] % 32)
   params[0] = np.pad(params[0], ((0, pad), (0, 0)), constant_values=[-1.])
 
-  adam = optax.adafactor(learning_rate=3e-4)
-  opt_state = adam.init(params)
+  optmr = optax.adafactor(learning_rate=3e-4)
+  opt_state = optmr.init(params)
 
   class Gpt2Module(Program):
     _params = Program.export_global(params, initialize=True, mutable=True)
@@ -82,7 +82,7 @@ def CreateGpt2Model(name, B, K, S, T):
     @Program.kernel
     def _train_step(params, opt_state, kv, text, target, t):
       grads = jax.grad(model.loss)(params, kv, text, target, t)
-      updates, new_opt_state = adam.update(grads, opt_state, params)
+      updates, new_opt_state = optmr.update(grads, opt_state, params)
       new_params = optax.apply_updates(params, updates)
       return new_params, new_opt_state
 

@@ -5,6 +5,7 @@ import absl.flags
 import iree.compiler.tools as compiler
 import jax
 import jax.numpy as jnp
+import optax
 import numpy as np
 import pathlib
 
@@ -27,6 +28,7 @@ def CreateGpt2Model(name, B, K, S, T):
   L, _, _, Q, H, _ = model.model_sizes[name]
 
   prompt_type = ShapedArray((B,K), dtype=jnp.int32)
+  text_type = ShapedArray((B,S), dtype=jnp.int32)
   t_type = ShapedArray((B,), dtype=jnp.int32)
   x_type = ShapedArray((B, T), dtype=jnp.int32)
   kv_type = model.init_kv(B, S, L, Q, H, dtype=jnp.float32, abstract=True)
@@ -38,11 +40,15 @@ def CreateGpt2Model(name, B, K, S, T):
   pad = 32 - (params[0].shape[0] % 32)
   params[0] = np.pad(params[0], ((0, pad), (0, 0)), constant_values=[-1.])
 
+  optmr = optax.adafactor(learning_rate=3e-4)
+  opt_state = optmr.init(params)
+
   class Gpt2Module(Program):
-    _params = Program.export_global(params, initialize=True)
+    _params = Program.export_global(params, initialize=True, mutable=True)
     _kv_state = Program.export_global(kv_type)
     _x_state = Program.export_global(x_type)
     _t_state = Program.export_global(t_type)
+    _opt_state = Program.export_global(opt_state, initialize=True, mutable=True)
 
     @Program.kernel
     def _encode(params, prompt, t):
@@ -72,6 +78,18 @@ def CreateGpt2Model(name, B, K, S, T):
       store_global(self._x_state, x)
       store_global(self._t_state, t)
       return x
+
+    @Program.kernel
+    def _train_step(params, opt_state, kv, text, target, t):
+      grads = jax.grad(model.loss)(params, kv, text, target, t)
+      updates, new_opt_state = optmr.update(grads, opt_state, params)
+      new_params = optax.apply_updates(params, updates)
+      return new_params, new_opt_state
+
+    def finetune(self, text=text_type, target=text_type, t=t_type):
+      new_params, new_opt_state = self._train_step(self._params, self._opt_state, self._kv_state, text, target, t)
+      store_global(self._params, new_params)
+      store_global(self._opt_state, new_opt_state)
 
   return Gpt2Module
 

@@ -20,7 +20,7 @@ jobs:
 
       - name: Install Python Dependencies
         run: |
-          python3 -m pip install absl-py future h5py numpy transformers
+          python3 -m pip install absl-py future h5py numpy optax transformers
 
       - name: Run installation
         run: |

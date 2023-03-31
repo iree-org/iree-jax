@@ -14,7 +14,7 @@ assert_dir = os.path.join(sys.path[0], "assets")
 params = model.load_gpt2_model("gpt2", assert_dir)
 
 cfg = config.get_config()
-B = cfg.B  # Batch size
+B = 1      # Batch size
 K = cfg.K  # Input sequence length
 S = cfg.S  # completed text length
 T = cfg.T  # Batched decode

@@ -12,7 +12,8 @@ import model
 import config
 
 cfg = config.get_config()
-B = cfg.B  # Batch size
+
+B = 1  # Batch size
 K = cfg.K  # Input sequence length
 S = cfg.S
 T = cfg.T  # Batched decode

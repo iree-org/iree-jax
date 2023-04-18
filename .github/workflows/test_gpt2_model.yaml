@@ -38,3 +38,12 @@ jobs:
       - name: Test GPT-2
         run: |
           python $GITHUB_WORKSPACE/models/gpt2/test_export.py
+
+      - name: Posting to Discord
+        uses: sarisia/actions-status-discord@c193626e5ce172002b8161e116aa897de7ab5383 # v1.10.2
+        if: ${{ failure() }}
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK }}
+          description: "iree-jax gpt2 regressions tests failed"
+          color: 0x0000ff
+          username: GitHub Actions

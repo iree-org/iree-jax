@@ -8,7 +8,7 @@ on:
 jobs:
   install_test:
     name: Install latest iree-jax release and tests GPT-2
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
 
     steps:
       - uses: actions/checkout@7884fcad6b5d53d10323aee724dc68d8b9096a2e #v2
@@ -38,3 +38,12 @@ jobs:
       - name: Test GPT-2
         run: |
           python $GITHUB_WORKSPACE/models/gpt2/test_export.py
+
+      - name: Posting to Discord
+        uses: sarisia/actions-status-discord@c193626e5ce172002b8161e116aa897de7ab5383 # v1.10.2
+        if: ${{ failure() }}
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK }}
+          description: "iree-jax gpt2 regressions tests failed"
+          color: 0x0000ff
+          username: GitHub Actions

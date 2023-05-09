@@ -105,7 +105,8 @@ def main(argv):
   with open(FLAGS.ir_path, 'w') as f:
     f.write(str(Program.get_mlir_module(module)))
 
-  compiler.compile_file(
+  if not FLAGS.no_compile:
+    compiler.compile_file(
       FLAGS.ir_path,
       input_type="mhlo",
       output_file=FLAGS.binary_path,

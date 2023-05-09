@@ -10,6 +10,13 @@ assets_dir = path.join(pathlib.Path(__file__).parent.resolve(), "assets")
 flags.DEFINE_string('binary_path', '/tmp/gpt2.vmfb', 'Path for binary')
 flags.DEFINE_string('ir_path', '/tmp/gpt2.mlir', 'Path for IR')
 flags.DEFINE_string('assets_path', assets_dir, 'Path for assets dir')
+flags.DEFINE_boolean('no_compile', False, 'Generate MLIR only, no IREE compling.')
+
+
+flags.DEFINE_integer('batch_size', 4, 'Minibatch size', lower_bound=1)
+flags.DEFINE_integer('encoder_sequence_length', 8, 'Encoder sequence length', lower_bound=1)
+flags.DEFINE_integer('total_sequence_length', 64, 'Total sequence length', lower_bound=1)
+flags.DEFINE_integer('decode_step_size', 1, 'Decode step size', lower_bound=1)
 
 # Create a tuple with model configuration details as follows:
 # B - batch size
@@ -18,4 +25,5 @@ flags.DEFINE_string('assets_path', assets_dir, 'Path for assets dir')
 # T - decode step size
 def get_config():
     config = collections.namedtuple('Config', ['B', 'K', 'S', 'T'])
-    return config(4, 8, 64, 1)
+    FLAGS = flags.FLAGS
+    return config(FLAGS.batch_size, FLAGS.encoder_sequence_length, FLAGS.total_sequence_length, FLAGS.decode_step_size)

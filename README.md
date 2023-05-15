@@ -222,7 +222,7 @@ pure Python and can be installed locally for development (note that this
 pulls from IREE pre-release snapshots):
 
 ```shell
-python -m pip install -e .[test,xla,cpu] -f https://openxla.github.io/iree/pip-release-links.html
+python -m pip install -e '.[test,xla,cpu]' -f https://openxla.github.io/iree/pip-release-links.html
 ```
 
 Note that in order to function the version of MLIR and MHLO used in the

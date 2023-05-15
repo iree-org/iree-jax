@@ -28,7 +28,7 @@ import jax.numpy as jnp
 # Need to interop with the JAX version of MLIR, which may or may not be
 # what we have here.
 from jax._src.lib.mlir import ir as jax_ir
-from jax.interpreters.xla import abstractify as jax_abstractify
+from jax._src.api_util import shaped_abstractify
 
 _JAX_CONTEXT = jax_ir.Context()
 _JAX_LOC = jax_ir.Location.unknown(context=_JAX_CONTEXT)
@@ -59,7 +59,7 @@ def abstractify(x) -> jax.core.AbstractValue:
   # Note that a ConcreteArray is an AbstractValue so we handle that above.
   if isinstance(x, jax.core.AbstractValue):
     return x
-  return jax_abstractify(x)
+  return shaped_abstractify(x)
 
 
 def unwrap_global_array(x) -> Optional[array_types.ExportedGlobalArray]:

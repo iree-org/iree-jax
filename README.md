@@ -254,9 +254,6 @@ directory:
 source .env && export PYTHONPATH
 ```
 
-You must have built IREE with the `-DIREE_BUILD_LEGACY_JAX=OFF` to disable
-the original bundled JAX API.
-
 You may need to pip uninstall the automatically installed
 `iree-compiler-snapshot` and `iree-runtime-snapshot` packages.
 

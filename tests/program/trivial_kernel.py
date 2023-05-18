@@ -25,6 +25,7 @@ from iree.jax import kernel, like, Program, IREE
 
 logging.basicConfig(level=logging.DEBUG)
 
+multiplier = jax.ShapeDtypeStruct((3, 4), jnp.float32)
 x = jnp.ones((3, 4), jnp.float32) * 4.0
 b = jnp.ones((3, 4), jnp.float32)
 
@@ -43,7 +44,7 @@ class TrivialKernel(Program):
   def get_params(self):
     return self._params
 
-  def run(self, multiplier=like(x)):
+  def run(self, multiplier=like(multiplier)):
     result = self._linear(multiplier, self._params.x, self._params.b)
     self._x = result
     return result
@@ -63,7 +64,7 @@ print(Program.get_mlir_module(m))
 b = IREE.compile_program(m, backends=["vmvx"])
 
 print("Initial params:", [a.to_host() for a in b.get_params()])
-update = np.asarray(jnp.ones_like(x))
+update = np.asarray(jnp.ones(multiplier.shape, multiplier.dtype))
 print("Run:", b.run(update).to_host())
 print("Run:", b.run(update + 2.0).to_host())
 print("Updated params:", [a.to_host() for a in b.get_params()])

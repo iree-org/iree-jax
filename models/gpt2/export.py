@@ -108,7 +108,7 @@ def main(argv):
   if not FLAGS.no_compile:
     compiler.compile_file(
       FLAGS.ir_path,
-      input_type="mhlo_legacy",
+      input_type="stablehlo",
       output_file=FLAGS.binary_path,
       target_backends=["llvm-cpu"])
 

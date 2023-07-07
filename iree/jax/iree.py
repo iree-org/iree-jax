@@ -75,7 +75,7 @@ class IREE:
       ir_module.operation.write_bytecode(file=output)
       bytecode = output.getvalue()
       self._compiled_artifact = iree.compiler.tools.compile_str(
-        bytecode, target_backends=self._backends, input_type="mhlo_legacy")
+        bytecode, target_backends=self._backends, input_type="stablehlo")
 
     return self._compiled_artifact
 

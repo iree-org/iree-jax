@@ -36,7 +36,7 @@ params = Params(x, b)
 
 
 class TrivialKernel(Program):
-  """By sub-classing `jax.iree.Program`, you create an IREE program which can
+  """By sub-classing `iree.jax.Program`, you create an IREE program which can
   be compiled (and executed in the host process) by instantiating it.
 
   The program's name is by default the snake_case equivalent of the class name

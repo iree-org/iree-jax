@@ -25,7 +25,7 @@ def main():
   iree_version = pinned_versions["iree-compiler"]
   print(iree_version)
 
-  command = f"python3 -m pip install . -f https://openxla.github.io/iree/pip-release-links.html --force-reinstall .[xla,cpu,test]"
+  command = f"python3 -m pip install . -f https://iree.dev/pip-release-links.html --force-reinstall .[xla,cpu,test]"
   print(command)
   proc = subprocess.Popen(command.split(' '))
   _, err = proc.communicate()

@@ -16,7 +16,6 @@ from jax.interpreters.mlir import ir
 from jaxlib.hlo_helpers import custom_call
 
 
-
 #########################################
 # Created Primitives for IREE attention #
 #########################################
@@ -67,7 +66,7 @@ def iree_attention_lowering(
 
 mlir.register_lowering(
     iree_attention_p, iree_attention_lowering, platform='iree_cpu'
-)  # Should this be iree?
+)
 
 #######################
 # Abstract evaluation #
@@ -91,3 +90,4 @@ def iree_attention(
     scale,
 ) -> Array:
   return _iree_attention(query, key, value, scale)
+
